@@ -1,0 +1,14 @@
+{
+    "cortex-debug.JLinkGDBServerPath": "D:/Program Files (x86)/SEGGER/JLink/JLinkGDBServerCL.exe",
+    "cortex-debug.stutilPath":"D:/Program Files/stlink-1.3.0-win64/bin/st-util.exe",
+    "cortex-debug.armToolchainPath": "D:/Program Files (x86)/GNU Tools ARM Embedded/8 2019-q3-update/bin",
+    "files.associations": {
+      "quadspi.h": "c",
+      "extpsram.h": "c",
+      "usbd_cdc_if.h": "c",
+      "ov_2640.h": "c",
+      "dcmi.h": "c",
+      "main.h": "c"
+    }
+    
+}

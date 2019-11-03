@@ -1,0 +1,99 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "py",
+            "args": [
+                "-3",
+                "D:/Keil_v5/scripts_for_vscode_armcc/build.py",
+                "-b",
+                "./MDK-ARM/NetCamera.uvprojx"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                {
+                    "owner": "c",
+                    "fileLocation": ["relative", "${workspaceFolder}/MDK-ARM"],
+                    "pattern": {
+                        "regexp": "^(.*)\\((\\d+)\\):\\s+(warning|error):\\s+(.*):\\s+(.*)$",
+                        "file": 1,
+                        "line": 2,
+                        "severity": 3,
+                        "code": 4,
+                        "message": 5,
+                    }
+                }
+            ]
+        },
+        {
+            "label": "rebuild",
+            "type": "shell",
+            "command": "py",
+            "args": [
+                "-3",
+                "D:/Keil_v5/scripts_for_vscode_armcc/build.py",
+                "-r",
+                "./MDK-ARM/NetCamera.uvprojx"
+            ],
+            "group": "build",
+            /*
+           // 对于使用ARM Compiler 6编译的工程
+            "problemMatcher": [
+                {
+                    "owner": "c",
+                    "fileLocation": ["relative", "${workspaceFolder}/MDK-ARM"],
+                    "pattern": {
+                        "regexp": "^(.*)\\((\\d+)\\):\\s+(warning|error):\\s+(.*)$",
+                        "file": 1,
+                        "line": 2,
+                        "severity": 3,
+                        "message": 4,
+                    }
+                }
+            */
+            "problemMatcher": [
+                {
+                    "owner": "c",
+                    "fileLocation": ["relative", "${workspaceFolder}/MDK-ARM"],
+                    "pattern": {
+                        "regexp": "^(.*)\\((\\d+)\\):\\s+(warning|error):\\s+(.*):\\s+(.*)$",
+                        "file": 1,
+                        "line": 2,
+                        "severity": 3,
+                        "code": 4,
+                        "message": 5,
+                    }
+                }
+            ]
+        },
+        {
+            "label": "download",
+            "type": "shell",
+            "command": "py",
+            "args": [
+                "-3",
+                "D:/Keil_v5/scripts_for_vscode_armcc/build.py",
+                "-f",
+                "./MDK-ARM/NetCamera.uvprojx"
+            ],
+            "group": "test"
+        },
+        {
+            "label": "open in keil",
+            "type": "process",
+            "command": "${D:/Keil_v5/Core/UV4/UV4.exe}",
+            "args": [
+                "./MDK-ARM/NetCamera.uvprojx"
+            ],
+            "group": "test"
+        }
+    ]
+
+}
