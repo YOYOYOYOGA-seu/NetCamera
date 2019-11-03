@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2019-10-23 21:28:47
- * @LastEditTime 2019-11-01 21:21:23
+ * @LastEditTime 2019-11-03 23:16:19
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath \Project\UsrHal\Inc\extPsram.h
@@ -21,6 +21,7 @@
 #define JPEG_STREAM_IMAGE_MEM_SIZE  0x080000      //512Kbyte
 #define RGB_IMAGE_MEM_SIZE          0x080000      //512Kbyte
 #define RESERVED_MEM_SIZE           0x300000      //3MKbyte, managed by malloc
+
 
 #define CODE_MEM_W_ADDR       0x000000
 #define CODE_MEM_R_ADDR       QSPI_BASE+CODE_MEM_W_ADDR)
