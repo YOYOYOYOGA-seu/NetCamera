@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2019-10-31 16:00:14
- * @LastEditTime 2019-11-02 19:38:56
+ * @LastEditTime 2019-11-04 20:16:41
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath \Project\UsrHal\Inc\ov_2640cmd.h
@@ -63,7 +63,7 @@ const uint8_t ov2640_sxga_init_reg_tbl[][2]=
 	0x26, 0x82,
 	0x5c, 0x00,
 	0x63, 0x00,
-	0x46, 0x00,
+	0x46, 0x87,
 	0x0c, 0x3c,
 	//
 	0x61, 0x70,
@@ -275,7 +275,7 @@ const uint8_t ov2640_svga_init_reg_tbl[][2]=
   0x26, 0x82,
   0x5c, 0x00,
   0x63, 0x00,
-  0x46, 0x87,
+  0x46, 0x00,
   0x0c, 0x3c,
   // 
   0x61, 0x70,

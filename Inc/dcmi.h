@@ -1,11 +1,3 @@
-/*
- * @Author Shi Zhangkun
- * @Date 2019-11-03 19:47:56
- * @LastEditTime 2019-11-03 21:07:12
- * @LastEditors Shi Zhangkun
- * @Description none
- * @FilePath \Project\Inc\dcmi.h
- */
 /**
   ******************************************************************************
   * File Name          : DCMI.h
@@ -36,10 +28,9 @@
 
 /* USER CODE BEGIN Includes */
 #include "usrHal.h"
+#define INVALID_MEM_INDEX          0xFF      //Invalid imageStmMemIndex  
 #define IMAGE_DATA_PATH             0         //0 sramIn   1psram
-#if IMAGE_DATA_PATH == 0
-  #define writeImageBuffToMem(a,len)  {uint16_t i;for(i=0;i<len;i++){*(uint16_t*)((uint32_t)pImageStmMem[imageStmMemIndex]+imageBuffIndex*2*len+2*i) = a[i];}}
-#else
+#if IMAGE_DATA_PATH == 1
   #define writeImageBuffToMem(a,len)  psramWrite((uint8_t*)a,pImageStmWMem+imageBuffIndex*2*len,2*len)
 #endif
 #define DCMI_BUFF_SIZE          8*1024     //uint16 length

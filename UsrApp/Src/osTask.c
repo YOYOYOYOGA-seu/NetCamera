@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2019-11-01 21:16:41
- * @LastEditTime 2019-11-03 13:50:17
+ * @LastEditTime 2019-11-04 21:38:44
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath \Project\UsrApp\Src\osTask.c
@@ -50,7 +50,6 @@ void tskUsbSendData(void *argument)
   uint32_t jpegHeadIndex = 0;
   uint32_t jpegSize = 0;
   uint8_t jpegHeadOk = 0;
-  uint8_t i;
   for(;;)
   {
     
@@ -61,7 +60,7 @@ void tskUsbSendData(void *argument)
         case RGB_STREAM:
           CDC_Transmit_FS((uint8_t*)cmdHead,2);
           delayMs(1);
-          //psarmEnterMemoryMapped();
+          psarmEnterMemoryMapped();
           #if	2*OV_RGB_IMGAE_WIDTH*OV_RGB_IMGAE_HEIGH < 65535
           CDC_Transmit_FS((uint8_t*)pImageStmMem[imageReadMemIndex],IMAGE_STREAM_MEM_SIZE);
           #else
@@ -112,7 +111,6 @@ void tskUsbSendData(void *argument)
         default:
           break;
       }
-      
     }
     imageReadMemIndex = !imageReadMemIndex;
 		osDelay(10);
@@ -157,7 +155,7 @@ void tskCamera(void *argument)
     
     //osSemaphoreAcquire(keyPressHandle,portMAX_DELAY);
     //HAL_GPIO_TogglePin(LED2_GPIO_Port,LED2_Pin);
-    DCMI_Start();
-    osDelay(70);
+    //DCMI_Start();
+    osDelay(100);
   }
 }

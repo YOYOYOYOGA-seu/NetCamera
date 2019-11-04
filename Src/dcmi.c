@@ -1,11 +1,3 @@
-/*
- * @Author Shi Zhangkun
- * @Date 2019-11-03 19:47:56
- * @LastEditTime 2019-11-03 20:31:03
- * @LastEditors Shi Zhangkun
- * @Description none
- * @FilePath \Project\Src\dcmi.c
- */
 /**
   ******************************************************************************
   * File Name          : DCMI.c
@@ -36,7 +28,7 @@ static uint16_t* pImageBuff[2];     //point to opreate buff
 static uint16_t imageBuffIndex = 0;
 
 #if IMAGE_DATA_PATH == 0UL
-  static uint16_t  imageStmMem[2][OV_RGB_IMGAE_HEIGH + 2][OV_RGB_IMGAE_WIDTH];//double Mem
+  static uint16_t  imageStmMem[2][100][OV_RGB_IMGAE_WIDTH];//double Mem
   const uint8_t* pImageStmMem[2] = {(uint8_t*)imageStmMem[0],(uint8_t*)imageStmMem[1]};//po
 #else
   const uint32_t pImageStmWMem = RGB_IMAGE_MEM_W_ADDR;
@@ -49,7 +41,6 @@ uint8_t imageStmMemStatus[2] = {0,0};
 extern osMutexId_t frameCompleteHandle;
 
 void DCMI_DMA_CompleteCallback(DMA_HandleTypeDef* hdma);
-void jpegBuffClear(void);
 /* USER CODE END 0 */
 
 DCMI_HandleTypeDef hdcmi;
@@ -111,28 +102,28 @@ void HAL_DCMI_MspInit(DCMI_HandleTypeDef* dcmiHandle)
     GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF13_DCMI;
     HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
     GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_6;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF13_DCMI;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF13_DCMI;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
     GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF13_DCMI;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
@@ -148,7 +139,7 @@ void HAL_DCMI_MspInit(DCMI_HandleTypeDef* dcmiHandle)
     hdma_dcmi.Init.Mode = DMA_CIRCULAR;
     hdma_dcmi.Init.Priority = DMA_PRIORITY_HIGH;
     hdma_dcmi.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
-    hdma_dcmi.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL;
+    hdma_dcmi.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
     hdma_dcmi.Init.MemBurst = DMA_MBURST_SINGLE;
     hdma_dcmi.Init.PeriphBurst = DMA_PBURST_SINGLE;
     if (HAL_DMA_Init(&hdma_dcmi) != HAL_OK)
@@ -170,8 +161,8 @@ void HAL_DCMI_MspInit(DCMI_HandleTypeDef* dcmiHandle)
 		HAL_DMA_RegisterCallback(&hdma_dcmi,HAL_DMA_XFER_CPLT_CB_ID,DCMI_DMA_CompleteCallback);
 		HAL_DMA_RegisterCallback(&hdma_dcmi,HAL_DMA_XFER_M1CPLT_CB_ID,DCMI_DMA_CompleteCallback);
     //
-    HAL_DMAEx_MultiBufferStart(&hdma_dcmi,(uint32_t)&DCMI->DR,(uint32_t)&imageStmMem[imageStmMemIndex][0][0],\
-																(uint32_t)(&imageStmMem[imageStmMemIndex][0][0]+2*DCMI_BUFF_SIZE),DCMI_BUFF_SIZE/2);
+    HAL_DMAEx_MultiBufferStart(&hdma_dcmi,(uint32_t)&DCMI->DR,(uint32_t)&imageStmMem[0][0][0],\
+																(uint32_t)(&imageStmMem[0][0][0]+2*DCMI_BUFF_SIZE),DCMI_BUFF_SIZE/2);
     
   
 
@@ -231,21 +222,16 @@ void HAL_DCMI_MspDeInit(DCMI_HandleTypeDef* dcmiHandle)
  */
 void DCMI_Start(void)
 {
-  
+  DCMI_Stop();
 	if(!imageStmMemStatus[0])
     imageStmMemIndex = 0;
   else if(!imageStmMemStatus[1])
     imageStmMemIndex = 1;
   else
   {
-		DCMI_Stop();
     return;
   }
   imageBuffIndex = 0;
-  DCMI_Stop();
-	((DMA_Stream_TypeDef   *)hdma_dcmi.Instance)->NDTR = DCMI_BUFF_SIZE/2;
-  ((DMA_Stream_TypeDef   *)hdma_dcmi.Instance)->M0AR = (uint32_t)&imageStmMem[imageStmMemIndex][0][0];
-	((DMA_Stream_TypeDef   *)hdma_dcmi.Instance)->M1AR = (uint32_t)(&imageStmMem[imageStmMemIndex][0][0]+2*DCMI_BUFF_SIZE);
   __HAL_DMA_ENABLE(&hdma_dcmi);
   __HAL_DMA_ENABLE_IT(&hdma_dcmi,DMA_IT_TC);
   DCMI->CR|=DCMI_CR_CAPTURE;
@@ -267,63 +253,55 @@ void DCMI_Stop(void)
 
 void HAL_DCMI_FrameEventCallback(DCMI_HandleTypeDef *hdcmi)
 {
-  //jpegBuffClear();
+  
   //alternate use two Memory area to store imgage
-  imageStmMemStatus[imageStmMemIndex] = 1;   //suspend this Mem
+  if(imageStmMemIndex<2)                    //If last frame be writen to Mem
+    imageStmMemStatus[imageStmMemIndex] = 1;//suspend this Mem
   imageBuffIndex = 0;
   __HAL_DCMI_ENABLE_IT(hdcmi,DCMI_IT_FRAME);
-  DCMI_Stop();
+  __HAL_DMA_DISABLE(&hdma_dcmi);           //Puse DMA
+  while(((DMA_Stream_TypeDef   *)hdma_dcmi.Instance)->CR&0X01);
+  if(imageStmMemStatus[0]&&imageStmMemStatus[1])  //All Mem are busy
+  {
+    imageStmMemIndex = INVALID_MEM_INDEX;
+  }
+  else //If not ,prepear DMA for next frame
+  {
+    if(!imageStmMemStatus[0])
+      imageStmMemIndex = 0;
+    else if(!imageStmMemStatus[1])
+      imageStmMemIndex = 1;
+    ((DMA_Stream_TypeDef   *)hdma_dcmi.Instance)->NDTR = DCMI_BUFF_SIZE/2;
+    ((DMA_Stream_TypeDef   *)hdma_dcmi.Instance)->M0AR = (uint32_t)&imageStmMem[imageStmMemIndex][0][0];
+    ((DMA_Stream_TypeDef   *)hdma_dcmi.Instance)->M1AR = (uint32_t)(&imageStmMem[imageStmMemIndex][0][0]+2*DCMI_BUFF_SIZE);
+    __HAL_DMA_ENABLE(&hdma_dcmi);
+    __HAL_DMA_ENABLE_IT(&hdma_dcmi,DMA_IT_TC);
+  }
+ // DCMI_Stop();
 	
 }
 
 void DCMI_DMA_CompleteCallback(DMA_HandleTypeDef* hdma)
 {
-  if(!imageStmMemStatus[imageStmMemIndex])
-  {
 		if(((DMA_Stream_TypeDef   *)hdma->Instance)->CR&(1<<19))
 		{
-     ((DMA_Stream_TypeDef   *)hdma->Instance)->M0AR=(uint32_t)(((DMA_Stream_TypeDef   *)hdma->Instance)->M1AR+2*DCMI_BUFF_SIZE);
-			//writeImageBuffToMem(pImageBuff[0],DCMI_BUFF_SIZE);
+    #if IMAGE_DATA_PATH == 0
+      ((DMA_Stream_TypeDef   *)hdma->Instance)->M0AR=(uint32_t)(((DMA_Stream_TypeDef   *)hdma->Instance)->M1AR+2*DCMI_BUFF_SIZE);
+    #else
+			writeImageBuffToMem(pImageBuff[0],DCMI_BUFF_SIZE);  //Use Buff to Write to extern psram 
+    #endif
 		}
 		else
 		{
+    #if IMAGE_DATA_PATH == 0
       ((DMA_Stream_TypeDef   *)hdma->Instance)->M1AR=(uint32_t)(((DMA_Stream_TypeDef   *)hdma->Instance)->M0AR+2*DCMI_BUFF_SIZE);
-			//writeImageBuffToMem(pImageBuff[1],DCMI_BUFF_SIZE);
+    #else
+			writeImageBuffToMem(pImageBuff[1],DCMI_BUFF_SIZE);  //Use Buff to Write to extern psram
+    #endif
 		}
 		imageBuffIndex++;
-  }
   SCB_CleanInvalidateDCache();
 } 
-
-/**
- * @brief  Clear the imageBuff after a jpeg frame complete
- * @note   The lenth of JPEG frame is indefinitive, so we should move
- *         the left data in the buff manually
- * @param {type} none
- * @retval none
- */
-void jpegBuffClear(void)
-{
-  uint16_t leftDataLen;
-	if(CameraMode)
-	{
-		((DMA_Stream_TypeDef   *)hdma_dcmi.Instance)->CR&=~1;		//停止当前传输
-		while(((DMA_Stream_TypeDef   *)hdma_dcmi.Instance)->CR&0X01);	//等待DMA1_Stream1可配�? 
-		leftDataLen = DCMI_BUFF_SIZE - ((DMA_Stream_TypeDef   *)hdma_dcmi.Instance)->NDTR;
-		__HAL_DMA_CLEAR_FLAG(&hdma_dcmi,DMA_FLAG_TCIF1_5);
-		__HAL_DMA_CLEAR_FLAG(&hdma_dcmi,DMA_FLAG_FEIF1_5);
-		if(((DMA_Stream_TypeDef   *)hdma_dcmi.Instance)->CR&(1<<19))
-		{
-			writeImageBuffToMem(pImageBuff[1],leftDataLen );
-		}
-		else
-		{
-			writeImageBuffToMem(pImageBuff[0],leftDataLen );
-		}
-		
-	}
-  //imageBuffIndex++;
-}
 /* USER CODE END 1 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
