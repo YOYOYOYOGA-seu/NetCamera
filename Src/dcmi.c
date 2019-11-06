@@ -22,18 +22,14 @@
 
 /* USER CODE BEGIN 0 */
 
-ovOutMode_t CameraMode = 1;                 //default jpeg Stream 
+ovOutMode_t CameraMode = JPEG_STREAM;                 //default jpeg Stream 
 static uint16_t imageBuff[2][DCMI_BUFF_SIZE];    //double buff
 static uint16_t* pImageBuff[2];     //point to opreate buff
 static uint16_t imageBuffIndex = 0;
-
-#if IMAGE_DATA_PATH == 0UL
-  static uint16_t  imageStmMem[2][100][OV_RGB_IMGAE_WIDTH];//double Mem
-  const uint8_t* pImageStmMem[2] = {(uint8_t*)imageStmMem[0],(uint8_t*)imageStmMem[1]};//po
-#else
-  const uint32_t pImageStmWMem = RGB_IMAGE_MEM_W_ADDR;
-  const uint32_t pImageStmRMem = RGB_IMAGE_MEM_R_ADDR;
-#endif
+static uint16_t  imageStmMem[2][100][OV_RGB_IMGAE_WIDTH];//double Mem
+const uint8_t* pImageStmMem[2] = {(uint8_t*)imageStmMem[0],(uint8_t*)imageStmMem[1]};//po
+const uint32_t pImageStmWMem = RGB_IMAGE_MEM_W_ADDR;
+const uint32_t pImageStmRMem = RGB_IMAGE_MEM_R_ADDR;
 static uint8_t imageStmMemIndex = 0;
 uint8_t imageStmMemStatus[2] = {0,0};
 
@@ -220,21 +216,26 @@ void HAL_DCMI_MspDeInit(DCMI_HandleTypeDef* dcmiHandle)
  * @param {type} none
  * @retval none
  */
-void DCMI_Start(void)
+uint8_t DCMI_Start(void)
 {
+  if(DCMI->CR&0X01)  //if DCMI is running
+  {
+    return HAL_ERROR;
+  }
   DCMI_Stop();
 	if(!imageStmMemStatus[0])
     imageStmMemIndex = 0;
   else if(!imageStmMemStatus[1])
     imageStmMemIndex = 1;
-  else
+  else            //if both mem are busy
   {
-    return;
+    return HAL_BUSY;
   }
   imageBuffIndex = 0;
   __HAL_DMA_ENABLE(&hdma_dcmi);
   __HAL_DMA_ENABLE_IT(&hdma_dcmi,DMA_IT_TC);
   DCMI->CR|=DCMI_CR_CAPTURE;
+  return HAL_OK;
 }
 
 /**
@@ -285,19 +286,14 @@ void DCMI_DMA_CompleteCallback(DMA_HandleTypeDef* hdma)
 {
 		if(((DMA_Stream_TypeDef   *)hdma->Instance)->CR&(1<<19))
 		{
-    #if IMAGE_DATA_PATH == 0
       ((DMA_Stream_TypeDef   *)hdma->Instance)->M0AR=(uint32_t)(((DMA_Stream_TypeDef   *)hdma->Instance)->M1AR+2*DCMI_BUFF_SIZE);
-    #else
-			writeImageBuffToMem(pImageBuff[0],DCMI_BUFF_SIZE);  //Use Buff to Write to extern psram 
-    #endif
+			//writeImageBuffToMem(pImageBuff[0],DCMI_BUFF_SIZE);  //Use Buff to Write to extern psram 
+ 
 		}
 		else
 		{
-    #if IMAGE_DATA_PATH == 0
       ((DMA_Stream_TypeDef   *)hdma->Instance)->M1AR=(uint32_t)(((DMA_Stream_TypeDef   *)hdma->Instance)->M0AR+2*DCMI_BUFF_SIZE);
-    #else
-			writeImageBuffToMem(pImageBuff[1],DCMI_BUFF_SIZE);  //Use Buff to Write to extern psram
-    #endif
+			//writeImageBuffToMem(pImageBuff[1],DCMI_BUFF_SIZE);  //Use Buff to Write to extern psram
 		}
 		imageBuffIndex++;
   SCB_CleanInvalidateDCache();

@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2019-11-01 21:16:41
- * @LastEditTime 2019-11-04 21:38:44
+ * @LastEditTime 2019-11-06 14:04:50
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath \Project\UsrApp\Src\osTask.c
@@ -20,12 +20,7 @@
 extern const uint8_t* pImageStmMem[2];
 extern uint8_t imageStmMemStatus[2];
 extern ovOutMode_t CameraMode;
-
-extern osSemaphoreId_t keyUpHandle;
-extern osSemaphoreId_t keyDownHandle;
-extern osSemaphoreId_t keyLeftHandle;
-extern osSemaphoreId_t keyRightHandle;
-extern osSemaphoreId_t keyPressHandle;
+extern osEventFlagsId_t keyEvent;
 /* Task Handler ---------------------------------------------------------*/
 
 /* Function declaration -------------------------------------------------*/
@@ -73,7 +68,7 @@ void tskUsbSendData(void *argument)
           delayMs(1);
           imageStmMemStatus[imageReadMemIndex] = 0;
           break;
-        case JPEG_STRAM:
+        case JPEG_STREAM:
         
           jpegHeadOk = 0;
           jpegHeadIndex = 0;
@@ -132,9 +127,12 @@ void tskKeyOpreation(void *argument)
     keyStatus[2] = HAL_GPIO_ReadPin(KEY2_GPIO_Port,KEY2_Pin);
     keyStatus[3] = HAL_GPIO_ReadPin(KEY3_GPIO_Port,KEY3_Pin);
     keyStatus[4] = HAL_GPIO_ReadPin(KEY4_GPIO_Port,KEY4_Pin);
-    if(lastKeyStatus[0] == GPIO_PIN_RESET && keyStatus[0] == GPIO_PIN_SET)
+    for(i = 0;i<5 ;i++)
     {
-      osSemaphoreRelease(keyPressHandle);
+      if(lastKeyStatus[i] == GPIO_PIN_RESET && keyStatus[i] == GPIO_PIN_SET)
+      {
+        osEventFlagsSet(keyEvent,1<<i);
+      }
     }
     osDelay(20);
   }
@@ -149,13 +147,24 @@ void tskLcd(void *argument)
 }
 void tskCamera(void *argument)
 {
-  DCMI_Start();
+  uint32_t keyEventBit;
+  //DCMI_Start();
   for(;;)
   {
     
-    //osSemaphoreAcquire(keyPressHandle,portMAX_DELAY);
-    //HAL_GPIO_TogglePin(LED2_GPIO_Port,LED2_Pin);
-    //DCMI_Start();
-    osDelay(100);
+    keyEventBit = osEventFlagsWait(keyEvent,KEY_ALL_EVENT_BIT,osFlagsWaitAny,portMAX_DELAY);
+    if(keyEventBit&KEY_LEFT_EVENT_BIT)
+    {
+      OV_PWDN(0);
+      osDelay(100);
+      if(DCMI_Start()!=HAL_OK)
+        OV_PWDN(1);
+    }
+     if(keyEventBit&KEY_UP_EVENT_BIT)
+    {
+      DCMI_Stop();
+      OV_PWDN(0);
+    }
+    
   }
 }

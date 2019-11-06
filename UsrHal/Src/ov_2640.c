@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2019-10-31 12:01:24
- * @LastEditTime 2019-11-03 19:24:23
+ * @LastEditTime 2019-11-06 11:03:16
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath \Project\UsrHal\Src\ov_2640.c
@@ -52,24 +52,12 @@ HAL_StatusTypeDef ov2640_Init(void)
 	{
 	   	sccbWriteReg(ov2640_svga_init_reg_tbl[i][0],ov2640_svga_init_reg_tbl[i][1]);
  	}
-	//ovImageSizeSet(800,600);
-  //ovWindowSet(0,0,800,600);
 	if(CameraMode)
 		ovJPEG_Mode();
 	else
 		ovRGB565_Mode();
   ovOutSizeSet(OV_RGB_IMGAE_WIDTH,OV_RGB_IMGAE_HEIGH);
-  
-  //ovSensorImageWinSet(150,0,1200,800);
-  //
-  /*
-  
-  //
-  for(i=0;i<sizeof(OV2640_176x144_JPEG)/2;i++)
-	{
-	   	sccbWriteReg(OV2640_176x144_JPEG[i][0],OV2640_176x144_JPEG[i][1]);
- 	}
-   */
+  OV_PWDN(1);
   return HAL_OK;
 }
 

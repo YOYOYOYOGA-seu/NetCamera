@@ -56,15 +56,10 @@ osThreadId_t UsbSendDataHandle;
 osThreadId_t KeyOpreationHandle;
 osThreadId_t LcdHandle;
 osThreadId_t CameraHandle;
-osSemaphoreId_t keyUpHandle;
-osSemaphoreId_t keyDownHandle;
-osSemaphoreId_t keyLeftHandle;
-osSemaphoreId_t keyRightHandle;
-osSemaphoreId_t keyPressHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-   
+osEventFlagsId_t  keyEvent;
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
@@ -92,39 +87,9 @@ osKernelInitialize();
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
-  /* Create the semaphores(s) */
-  /* definition and creation of keyUp */
-  const osSemaphoreAttr_t keyUp_attributes = {
-    .name = "keyUp"
-  };
-  keyUpHandle = osSemaphoreNew(2, 2, &keyUp_attributes);
-
-  /* definition and creation of keyDown */
-  const osSemaphoreAttr_t keyDown_attributes = {
-    .name = "keyDown"
-  };
-  keyDownHandle = osSemaphoreNew(2, 2, &keyDown_attributes);
-
-  /* definition and creation of keyLeft */
-  const osSemaphoreAttr_t keyLeft_attributes = {
-    .name = "keyLeft"
-  };
-  keyLeftHandle = osSemaphoreNew(2, 2, &keyLeft_attributes);
-
-  /* definition and creation of keyRight */
-  const osSemaphoreAttr_t keyRight_attributes = {
-    .name = "keyRight"
-  };
-  keyRightHandle = osSemaphoreNew(2, 2, &keyRight_attributes);
-
-  /* definition and creation of keyPress */
-  const osSemaphoreAttr_t keyPress_attributes = {
-    .name = "keyPress"
-  };
-  keyPressHandle = osSemaphoreNew(2, 2, &keyPress_attributes);
-
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
+  keyEvent = osEventFlagsNew(NULL);
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */

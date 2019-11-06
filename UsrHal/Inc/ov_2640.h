@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2019-10-31 12:00:29
- * @LastEditTime 2019-11-04 21:21:21
+ * @LastEditTime 2019-11-06 14:09:55
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath \Project\UsrHal\Inc\ov_2640.h
@@ -18,7 +18,7 @@
 typedef enum
 {
   RGB_STREAM = 0,
-  JPEG_STRAM,
+  JPEG_STREAM,
   JPEG_PHOTO
 }ovOutMode_t;
 /* Commend defines -----------------------------------------------------------*/
@@ -26,8 +26,8 @@ typedef enum
 #define OV_PWDN(a)      HAL_GPIO_WritePin(OV_PWDN_GPIO_Port,OV_PWDN_Pin,(GPIO_PinState)a)
 #define OV_RESET(a)      HAL_GPIO_WritePin(OV_RESET_GPIO_Port,OV_RESET_Pin,(GPIO_PinState)a)
 /* Defines -------------------------------------------------------------------*/
-#define OV_RGB_IMGAE_WIDTH          240  
-#define OV_RGB_IMGAE_HEIGH          180
+#define OV_RGB_IMGAE_WIDTH          480  
+#define OV_RGB_IMGAE_HEIGH          360
 
 #define OV_JPEG_STREAM_WIDTH        128     
 #define OV_JPEG_STREAM_HEIGH        128  

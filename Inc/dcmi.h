@@ -28,6 +28,8 @@
 
 /* USER CODE BEGIN Includes */
 #include "usrHal.h"
+
+/* Defines -------------------------------------------------------------------*/
 #define INVALID_MEM_INDEX          0xFF      //Invalid imageStmMemIndex  
 #define IMAGE_DATA_PATH             0         //0 sramIn   1psram
 #if IMAGE_DATA_PATH == 1
@@ -36,8 +38,7 @@
 #define DCMI_BUFF_SIZE          8*1024     //uint16 length
 
 #define IMAGE_STREAM_MEM_SIZE   2*OV_RGB_IMGAE_WIDTH*OV_RGB_IMGAE_HEIGH
-
-
+/*Commend defines --------------------------------------------------------------*/
 
 
 /* USER CODE END Includes */
@@ -52,7 +53,7 @@ extern const uint32_t pImageStmRMem;
 void MX_DCMI_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-void DCMI_Start(void);
+uint8_t DCMI_Start(void);
 void DCMI_Stop(void);
 
 /* USER CODE END Prototypes */

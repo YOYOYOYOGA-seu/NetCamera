@@ -305,7 +305,7 @@
               <OCR_RVCT10>
                 <Type>0</Type>
                 <StartAddress>0x24000000</StartAddress>
-                <Size>0x40000</Size>
+                <Size>0x80000</Size>
               </OCR_RVCT10>
             </OnChipMemories>
             <RvctStartVector></RvctStartVector>
@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32H750xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;                               ../Drivers/STM32H7xx_HAL_Driver/Inc;                               ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;                               ../Middlewares/Third_Party/FreeRTOS/Source/include;                               ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;                               ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;                               ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;                               ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;                               ../Drivers/CMSIS/Device/ST/STM32H7xx/Include;                               ..\UsrHal\Inc;                               ..\UsrApp\inc</IncludePath>
+              <IncludePath>../Inc;                                ../Drivers/STM32H7xx_HAL_Driver/Inc;                                ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;                                ../Middlewares/Third_Party/FreeRTOS/Source/include;                                ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;                                ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;                                ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;                                ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;                                ../Drivers/CMSIS/Device/ST/STM32H7xx/Include;                                ..\UsrHal\Inc;                                ..\UsrApp\inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
