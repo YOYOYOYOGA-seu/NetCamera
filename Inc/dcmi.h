@@ -28,18 +28,16 @@
 
 /* USER CODE BEGIN Includes */
 #include "usrHal.h"
-
+#include "osTask.h"
 /* Defines -------------------------------------------------------------------*/
 #define INVALID_MEM_INDEX          0xFF      //Invalid imageStmMemIndex  
-#define IMAGE_DATA_PATH             0         //0 sramIn   1psram
-#if IMAGE_DATA_PATH == 1
+#define DCMI_BUFF_SIZE          8*1024     //uint16 length
+#define IMAGE_STREAM_MEM_SIZE   2*OV_JPEG_STREAM_WIDTH*OV_JPEG_STREAM_HEIGH/8
+#define IMAGE_PHOTO_MEM_SIZE   2*OV_JPEG_PHOTO_WIDTH*OV_JPEG_PHOTO_HEIGH/8
+/*Commend defines --------------------------------------------------------------*/
+#ifdef USE_PSARM_AS_PHOTO_MEM
   #define writeImageBuffToMem(a,len)  psramWrite((uint8_t*)a,pImageStmWMem+imageBuffIndex*2*len,2*len)
 #endif
-#define DCMI_BUFF_SIZE          8*1024     //uint16 length
-
-#define IMAGE_STREAM_MEM_SIZE   2*OV_RGB_IMGAE_WIDTH*OV_RGB_IMGAE_HEIGH
-/*Commend defines --------------------------------------------------------------*/
-
 
 /* USER CODE END Includes */
 

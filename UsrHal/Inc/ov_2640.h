@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2019-10-31 12:00:29
- * @LastEditTime 2019-11-06 14:09:55
+ * @LastEditTime 2019-11-06 22:06:32
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath \Project\UsrHal\Inc\ov_2640.h
@@ -21,6 +21,11 @@ typedef enum
   JPEG_STREAM,
   JPEG_PHOTO
 }ovOutMode_t;
+typedef enum
+{
+  OV_PWOER_OFF = 0,
+  OV_PWOER_ON = 1
+}ovPowerStatus_t;
 /* Commend defines -----------------------------------------------------------*/
 
 #define OV_PWDN(a)      HAL_GPIO_WritePin(OV_PWDN_GPIO_Port,OV_PWDN_Pin,(GPIO_PinState)a)
@@ -29,8 +34,8 @@ typedef enum
 #define OV_RGB_IMGAE_WIDTH          480  
 #define OV_RGB_IMGAE_HEIGH          360
 
-#define OV_JPEG_STREAM_WIDTH        128     
-#define OV_JPEG_STREAM_HEIGH        128  
+#define OV_JPEG_STREAM_WIDTH        240      
+#define OV_JPEG_STREAM_HEIGH        180  
 
 #define OV_JPEG_PHOTO_WIDTH         800     
 #define OV_JPEG_PHOTO_HEIGH         600 
@@ -122,9 +127,11 @@ typedef enum
 #define OV2640_SENSOR_REG60      0x60
 #define OV2640_SENSOR_HISTO_LOW  0x61
 #define OV2640_SENSOR_HISTO_HIGH 0x62
-
+/* Extern variable------- ------------------------------------------------------*/
+extern ovPowerStatus_t ovPowerStatus;
 /* Function declaration ------------------------------------------------------*/
 HAL_StatusTypeDef ov2640_Init(void);
+HAL_StatusTypeDef ov2640_DeInit(void);
 void ovJPEG_Mode(void);
 void ovRGB565_Mode(void);
 void ovAutoExposure(uint8_t level);

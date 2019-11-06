@@ -21,22 +21,27 @@
 #include "dcmi.h"
 
 /* USER CODE BEGIN 0 */
-
-ovOutMode_t CameraMode = JPEG_STREAM;                 //default jpeg Stream 
-static uint16_t imageBuff[2][DCMI_BUFF_SIZE];    //double buff
-static uint16_t* pImageBuff[2];     //point to opreate buff
-static uint16_t imageBuffIndex = 0;
-static uint16_t  imageStmMem[2][100][OV_RGB_IMGAE_WIDTH];//double Mem
-const uint8_t* pImageStmMem[2] = {(uint8_t*)imageStmMem[0],(uint8_t*)imageStmMem[1]};//po
-const uint32_t pImageStmWMem = RGB_IMAGE_MEM_W_ADDR;
-const uint32_t pImageStmRMem = RGB_IMAGE_MEM_R_ADDR;
+/* Extern variable  -----------------------------------------------------------------*/
+extern osEventFlagsId_t usbSendEvent;
+/* variable  -----------------------------------------------------------------*/
+ovOutMode_t CameraMode = JPEG_STREAM;   //default jpeg Stream 
+#if USE_PSARM_AS_PHOTO_MEM == 1
+  //Buff is used in photo mode, in this mode temp Mem is extern psram
+  static uint16_t imageBuff[2][DCMI_BUFF_SIZE];    //double buff
+  static uint16_t* pImageBuff[2] = {imageBuff[0],imageBuff[1]};     //point to opreate buff
+  uint16_t imageBuffIndex = 0; //
+  const uint32_t pImageStmWMem = JPEG_POHTO_MEM_W_ADDR;
+  const uint32_t pImageStmRMem = JPEG_POHTO_MEM_R_ADDR;
+#endif
+//In side imageMem used only in stream mode, DMA write data to Mem directly
+static uint16_t  imageStmMem[2][OV_JPEG_STREAM_HEIGH/4][OV_JPEG_STREAM_WIDTH/2];//double Mem
+static uint16_t  imagePtoMem[OV_JPEG_PHOTO_HEIGH/4][OV_JPEG_PHOTO_WIDTH/2];
+const uint8_t* pImageStmMem[3] = {(uint8_t*)imageStmMem[0],(uint8_t*)imageStmMem[1],(uint8_t*)imagePtoMem};//po
 static uint8_t imageStmMemIndex = 0;
-uint8_t imageStmMemStatus[2] = {0,0};
-
-
-extern osMutexId_t frameCompleteHandle;
-
+uint8_t imageStmMemStatus[3] = {0,0,0};   //Mem area busy flag, stmMem0,stmMem1, ptoMem
+/* Function declare ------------------------------------------------------------------*/
 void DCMI_DMA_CompleteCallback(DMA_HandleTypeDef* hdma);
+void DCMI_DMA_SetForNextTransfer(uint16_t* memAddr);
 /* USER CODE END 0 */
 
 DCMI_HandleTypeDef hdcmi;
@@ -72,8 +77,7 @@ void HAL_DCMI_MspInit(DCMI_HandleTypeDef* dcmiHandle)
   if(dcmiHandle->Instance==DCMI)
   {
   /* USER CODE BEGIN DCMI_MspInit 0 */
-    pImageBuff[0] = imageBuff[0];
-    pImageBuff[1] = imageBuff[1];
+    
   /* USER CODE END DCMI_MspInit 0 */
     /* DCMI clock enable */
     __HAL_RCC_DCMI_CLK_ENABLE();
@@ -158,8 +162,8 @@ void HAL_DCMI_MspInit(DCMI_HandleTypeDef* dcmiHandle)
 		HAL_DMA_RegisterCallback(&hdma_dcmi,HAL_DMA_XFER_M1CPLT_CB_ID,DCMI_DMA_CompleteCallback);
     //
     HAL_DMAEx_MultiBufferStart(&hdma_dcmi,(uint32_t)&DCMI->DR,(uint32_t)&imageStmMem[0][0][0],\
-																(uint32_t)(&imageStmMem[0][0][0]+2*DCMI_BUFF_SIZE),DCMI_BUFF_SIZE/2);
-    
+																(uint32_t)&imageStmMem[0][0][0]+2*DCMI_BUFF_SIZE,DCMI_BUFF_SIZE/2);
+    __HAL_DMA_DISABLE(&hdma_dcmi);//close DMA after init, open when use camera
   
 
   /* USER CODE END DCMI_MspInit 1 */
@@ -218,24 +222,37 @@ void HAL_DCMI_MspDeInit(DCMI_HandleTypeDef* dcmiHandle)
  */
 uint8_t DCMI_Start(void)
 {
-  if(DCMI->CR&0X01)  //if DCMI is running
+  if(CameraMode == JPEG_STREAM)
   {
-    return HAL_ERROR;
+    if(DCMI->CR&0X01)  //if DCMI is running
+    {
+      return HAL_OK;
+    }
+    DCMI_Stop();
+    DCMI_DMA_SetForNextTransfer(&imageStmMem[imageStmMemIndex][0][0]);
+    if(!imageStmMemStatus[0])
+      imageStmMemIndex = 0;
+    else if(!imageStmMemStatus[1])
+      imageStmMemIndex = 1;
+    else  //if both mem are busy,we can't open DMA(it would be opened in DCMI_FRAME_IT when Mem not busy)
+    {
+      DCMI->CR|=DCMI_CR_CAPTURE;
+      return HAL_OK;
+    }
   }
-  DCMI_Stop();
-	if(!imageStmMemStatus[0])
-    imageStmMemIndex = 0;
-  else if(!imageStmMemStatus[1])
-    imageStmMemIndex = 1;
-  else            //if both mem are busy
+  else if(CameraMode == JPEG_PHOTO)
   {
-    return HAL_BUSY;
+    DCMI_DMA_SetForNextTransfer(&imagePtoMem[0][0]);
+    if(imageStmMemStatus[2]) //if ptoMem is Busy
+    {
+      DCMI_Stop();
+      return HAL_BUSY;
+    }
   }
-  imageBuffIndex = 0;
-  __HAL_DMA_ENABLE(&hdma_dcmi);
-  __HAL_DMA_ENABLE_IT(&hdma_dcmi,DMA_IT_TC);
-  DCMI->CR|=DCMI_CR_CAPTURE;
-  return HAL_OK;
+    __HAL_DMA_ENABLE(&hdma_dcmi);
+    __HAL_DMA_ENABLE_IT(&hdma_dcmi,DMA_IT_TC);
+    DCMI->CR|=DCMI_CR_CAPTURE;
+    return HAL_OK;
 }
 
 /**
@@ -252,52 +269,82 @@ void DCMI_Stop(void)
   __HAL_DMA_DISABLE(&hdma_dcmi);//关闭DMA
 } 
 
+/**
+ * @brief  DCMI frame event callback function
+ * @note  
+ * @param {type} none
+ * @retval none
+ */
 void HAL_DCMI_FrameEventCallback(DCMI_HandleTypeDef *hdcmi)
 {
-  
-  //alternate use two Memory area to store imgage
-  if(imageStmMemIndex<2)                    //If last frame be writen to Mem
-    imageStmMemStatus[imageStmMemIndex] = 1;//suspend this Mem
-  imageBuffIndex = 0;
-  __HAL_DCMI_ENABLE_IT(hdcmi,DCMI_IT_FRAME);
-  __HAL_DMA_DISABLE(&hdma_dcmi);           //Puse DMA
-  while(((DMA_Stream_TypeDef   *)hdma_dcmi.Instance)->CR&0X01);
-  if(imageStmMemStatus[0]&&imageStmMemStatus[1])  //All Mem are busy
+
+  if(CameraMode == JPEG_STREAM)
   {
-    imageStmMemIndex = INVALID_MEM_INDEX;
+    //alternate use two Memory area to store imgage
+    if(imageStmMemIndex<2)                    //If last frame be writen to Mem
+      imageStmMemStatus[imageStmMemIndex] = 1;//suspend this Mem
+    __HAL_DCMI_ENABLE_IT(hdcmi,DCMI_IT_FRAME);
+    __HAL_DMA_DISABLE(&hdma_dcmi);           //Puse DMA
+    while(((DMA_Stream_TypeDef   *)hdma_dcmi.Instance)->CR&0X01);//wait DMA stop
+    if(imageStmMemStatus[0]&&imageStmMemStatus[1])  //All Mem are busy, not open DMA
+    {
+      imageStmMemIndex = INVALID_MEM_INDEX;
+    }
+    else //If not ,prepear DMA for next frame
+    {
+      if(!imageStmMemStatus[0])
+        imageStmMemIndex = 0;
+      else if(!imageStmMemStatus[1])
+        imageStmMemIndex = 1;
+      DCMI_DMA_SetForNextTransfer(&imageStmMem[imageStmMemIndex][0][0]);
+      __HAL_DMA_ENABLE(&hdma_dcmi);
+      __HAL_DMA_ENABLE_IT(&hdma_dcmi,DMA_IT_TC);
+    }
   }
-  else //If not ,prepear DMA for next frame
-  {
-    if(!imageStmMemStatus[0])
-      imageStmMemIndex = 0;
-    else if(!imageStmMemStatus[1])
-      imageStmMemIndex = 1;
-    ((DMA_Stream_TypeDef   *)hdma_dcmi.Instance)->NDTR = DCMI_BUFF_SIZE/2;
-    ((DMA_Stream_TypeDef   *)hdma_dcmi.Instance)->M0AR = (uint32_t)&imageStmMem[imageStmMemIndex][0][0];
-    ((DMA_Stream_TypeDef   *)hdma_dcmi.Instance)->M1AR = (uint32_t)(&imageStmMem[imageStmMemIndex][0][0]+2*DCMI_BUFF_SIZE);
-    __HAL_DMA_ENABLE(&hdma_dcmi);
-    __HAL_DMA_ENABLE_IT(&hdma_dcmi,DMA_IT_TC);
+  else if(CameraMode == JPEG_PHOTO)
+ {
+    DCMI_Stop();
+    __HAL_DCMI_ENABLE_IT(hdcmi,DCMI_IT_FRAME);
+    __HAL_DMA_CLEAR_FLAG(&hdma_dcmi,DMA_FLAG_FEIF1_5);
+    imageStmMemStatus[2] = 1;  
   }
- // DCMI_Stop();
-	
+ // 
+	osEventFlagsSet(usbSendEvent,USB_SEND_IMAGE_EVENT_BIT);
 }
 
+/**
+ * @brief  DCMI_DMA Mem0, Mem1 complete IT Callback function 
+ * @note  
+ * @param {type} none
+ * @retval none
+ */
 void DCMI_DMA_CompleteCallback(DMA_HandleTypeDef* hdma)
 {
-		if(((DMA_Stream_TypeDef   *)hdma->Instance)->CR&(1<<19))
-		{
-      ((DMA_Stream_TypeDef   *)hdma->Instance)->M0AR=(uint32_t)(((DMA_Stream_TypeDef   *)hdma->Instance)->M1AR+2*DCMI_BUFF_SIZE);
-			//writeImageBuffToMem(pImageBuff[0],DCMI_BUFF_SIZE);  //Use Buff to Write to extern psram 
- 
-		}
-		else
-		{
-      ((DMA_Stream_TypeDef   *)hdma->Instance)->M1AR=(uint32_t)(((DMA_Stream_TypeDef   *)hdma->Instance)->M0AR+2*DCMI_BUFF_SIZE);
-			//writeImageBuffToMem(pImageBuff[1],DCMI_BUFF_SIZE);  //Use Buff to Write to extern psram
-		}
-		imageBuffIndex++;
-  SCB_CleanInvalidateDCache();
+  if(((DMA_Stream_TypeDef   *)hdma->Instance)->CR&(1<<19))
+  {
+    ((DMA_Stream_TypeDef   *)hdma->Instance)->M0AR=((DMA_Stream_TypeDef   *)hdma->Instance)->M1AR+2*DCMI_BUFF_SIZE;
+  }
+  else
+  {
+    ((DMA_Stream_TypeDef   *)hdma->Instance)->M1AR=((DMA_Stream_TypeDef   *)hdma->Instance)->M0AR+2*DCMI_BUFF_SIZE;
+  }
 } 
+
+/**
+ * @brief Config some DMA register for next transfer
+ * @note  Must set DMA_SxCR_CT to zero
+ * @param {type} none
+ * @retval none
+ */
+void DCMI_DMA_SetForNextTransfer(uint16_t* memAddr)
+{
+  ((DMA_Stream_TypeDef   *)hdma_dcmi.Instance)->NDTR = DCMI_BUFF_SIZE/2;
+    //Must be clean, because after last transfer CT many be 1(it means data will be write to Mem1 first)
+  ((DMA_Stream_TypeDef   *)hdma_dcmi.Instance)->CR &= ~DMA_SxCR_CT_Msk; 
+  ((DMA_Stream_TypeDef   *)hdma_dcmi.Instance)->M0AR = (uint32_t)memAddr;
+  ((DMA_Stream_TypeDef   *)hdma_dcmi.Instance)->M1AR = (uint32_t)memAddr+2*DCMI_BUFF_SIZE;
+
+}
 /* USER CODE END 1 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

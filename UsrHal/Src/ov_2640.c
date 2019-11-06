@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2019-10-31 12:01:24
- * @LastEditTime 2019-11-06 11:03:16
+ * @LastEditTime 2019-11-06 18:38:19
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath \Project\UsrHal\Src\ov_2640.c
@@ -15,6 +15,7 @@
 /* Defines -------------------------------------------------------------------*/
 extern ovOutMode_t CameraMode; 
 
+ovPowerStatus_t ovPowerStatus = OV_PWOER_OFF;
 /**
  * @brief  ov2640 Init function
  * @note  
@@ -42,6 +43,7 @@ HAL_StatusTypeDef ov2640_Init(void)
   readID[1] |= sccbReadReg(OV2640_SENSOR_PIDL); //读取厂家ID 低八位
   if(readID[0]!=OV2640_MID||readID[1]!=OV2640_PID)
   {
+     OV_PWDN(1);
     sprintf(errorInform,"errOV_ID: %X %X\n",readID[0],readID[1]);
     Error_Handler();
     return HAL_ERROR;
@@ -52,15 +54,28 @@ HAL_StatusTypeDef ov2640_Init(void)
 	{
 	   	sccbWriteReg(ov2640_svga_init_reg_tbl[i][0],ov2640_svga_init_reg_tbl[i][1]);
  	}
-	if(CameraMode)
-		ovJPEG_Mode();
-	else
-		ovRGB565_Mode();
-  ovOutSizeSet(OV_RGB_IMGAE_WIDTH,OV_RGB_IMGAE_HEIGH);
-  OV_PWDN(1);
+	ovJPEG_Mode();
+  ovOutSizeSet(OV_JPEG_STREAM_WIDTH,OV_JPEG_STREAM_HEIGH);
+  ovPowerStatus = OV_PWOER_ON;
   return HAL_OK;
 }
 
+/**
+ * @brief  Close ov2640
+ * @note  
+ * @param {type} none
+ * @retval none
+ */
+HAL_StatusTypeDef ov2640_DeInit(void)
+{
+  OV_RESET(0);
+  delayMs(10);
+  OV_RESET(1);
+  delayMs(10);
+  OV_PWDN(1);
+  ovPowerStatus = OV_PWOER_OFF;
+  return HAL_OK;
+}
 /**
  * @brief  Set OV2640 out put mode to JPEG
  * @note  

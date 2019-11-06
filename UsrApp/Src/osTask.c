@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2019-11-01 21:16:41
- * @LastEditTime 2019-11-06 14:04:50
+ * @LastEditTime 2019-11-06 22:20:53
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath \Project\UsrApp\Src\osTask.c
@@ -17,15 +17,23 @@
 #include "UsrHal.h"
 #include "dcmi.h"
 /* Extern variable ------------------------------------------------------*/
-extern const uint8_t* pImageStmMem[2];
-extern uint8_t imageStmMemStatus[2];
+extern const uint8_t* pImageStmMem[3];
+extern uint8_t imageStmMemStatus[3];
 extern ovOutMode_t CameraMode;
+
+/* Event handler extern ------------------------------------------------------*/
 extern osEventFlagsId_t keyEvent;
+extern osEventFlagsId_t usbSendEvent;
 /* Task Handler ---------------------------------------------------------*/
 
 /* Function declaration -------------------------------------------------*/
 
-
+/**
+ * @brief  Main task
+ * @note  
+ * @param {type} none
+ * @retval none
+ */
 void tskMain(void *argument)
 {
   for(;;)
@@ -35,11 +43,16 @@ void tskMain(void *argument)
     osDelay(500);
   }
 }
+
+/**
+ * @brief  Usb CDC sent data task
+ * @note  
+ * @param {type} none
+ * @retval none
+ */
 void tskUsbSendData(void *argument)
 {
-  
-  uint8_t cmdHead[2] = {0x01,0xFE};
-  uint8_t cmdTail[2] = {0xFE,0x01};
+  uint32_t usbSendEventBit;
 	uint8_t enter[2] = "\n\n";
   uint8_t imageReadMemIndex = 0;
   uint32_t jpegHeadIndex = 0;
@@ -47,32 +60,16 @@ void tskUsbSendData(void *argument)
   uint8_t jpegHeadOk = 0;
   for(;;)
   {
-    
-    if(imageStmMemStatus[imageReadMemIndex])
+    usbSendEventBit = osEventFlagsWait(usbSendEvent,USB_SEND_ALL_EVENT_BIT,osFlagsWaitAny,portMAX_DELAY);
+    if(usbSendEventBit&USB_SEND_IMAGE_EVENT_BIT)
     {
-      switch (CameraMode)
+      for(imageReadMemIndex = 0;imageReadMemIndex<3;imageReadMemIndex++)
       {
-        case RGB_STREAM:
-          CDC_Transmit_FS((uint8_t*)cmdHead,2);
-          delayMs(1);
-          psarmEnterMemoryMapped();
-          #if	2*OV_RGB_IMGAE_WIDTH*OV_RGB_IMGAE_HEIGH < 65535
-          CDC_Transmit_FS((uint8_t*)pImageStmMem[imageReadMemIndex],IMAGE_STREAM_MEM_SIZE);
-          #else
-          CDC_Transmit_FS((uint8_t*)pImageStmMem[imageReadMemIndex],IMAGE_STREAM_MEM_SIZE/2);
-          osDelay(80);
-          CDC_Transmit_FS((uint8_t*)(pImageStmMem[imageReadMemIndex]+IMAGE_STREAM_MEM_SIZE/2),IMAGE_STREAM_MEM_SIZE/2);
-          #endif
-          osDelay(80);
-          CDC_Transmit_FS((uint8_t*)cmdTail,2);
-          delayMs(1);
-          imageStmMemStatus[imageReadMemIndex] = 0;
-          break;
-        case JPEG_STREAM:
-        
+        if(imageStmMemStatus[imageReadMemIndex])
+        {
           jpegHeadOk = 0;
           jpegHeadIndex = 0;
-          for(jpegSize = 0; jpegSize<IMAGE_STREAM_MEM_SIZE ;jpegSize++)
+          for(jpegSize = 0; jpegSize<(imageReadMemIndex<2?IMAGE_STREAM_MEM_SIZE:IMAGE_PHOTO_MEM_SIZE);jpegSize++)
           {
             
             if(pImageStmMem[imageReadMemIndex][jpegSize] == 0xFF&&pImageStmMem[imageReadMemIndex][jpegSize + 1] == 0xD8&&jpegHeadOk == 0)
@@ -88,29 +85,29 @@ void tskUsbSendData(void *argument)
             }
           
           }
-          
-          HAL_Delay(1);
           if(jpegHeadOk == 2&&jpegSize < 65535)
           {
               CDC_Transmit_FS((uint8_t*)(&pImageStmMem[imageReadMemIndex][jpegHeadIndex]),jpegSize);
           }
           if(CDC_Transmit_FS((uint8_t*)enter,2)!=USBD_OK)
           {
-            osDelay(10);
+            osDelay(5);
           }
-          imageStmMemStatus[imageReadMemIndex] = 0;
-          break;
-        case JPEG_PHOTO:
-          /* code */
-          break;
-        default:
-          break;
+          imageStmMemStatus[imageReadMemIndex] = 0;  
+        }
       }
     }
-    imageReadMemIndex = !imageReadMemIndex;
-		osDelay(10);
+    osDelay(10);
   }
+  
 }
+
+/**
+ * @brief  Scan the key action
+ * @note  50Hz sampling freqency
+ * @param {type} none
+ * @retval none
+ */
 void tskKeyOpreation(void *argument)
 {
   uint8_t lastKeyStatus[5] ;
@@ -129,7 +126,7 @@ void tskKeyOpreation(void *argument)
     keyStatus[4] = HAL_GPIO_ReadPin(KEY4_GPIO_Port,KEY4_Pin);
     for(i = 0;i<5 ;i++)
     {
-      if(lastKeyStatus[i] == GPIO_PIN_RESET && keyStatus[i] == GPIO_PIN_SET)
+      if(lastKeyStatus[i] == GPIO_PIN_SET && keyStatus[i] == GPIO_PIN_RESET)
       {
         osEventFlagsSet(keyEvent,1<<i);
       }
@@ -137,6 +134,13 @@ void tskKeyOpreation(void *argument)
     osDelay(20);
   }
 }
+
+/**
+ * @brief  
+ * @note  
+ * @param {type} none
+ * @retval none
+ */
 void tskLcd(void *argument)
 {
   for(;;)
@@ -145,26 +149,54 @@ void tskLcd(void *argument)
     osDelay(1000);
   }
 }
+
+/**
+ * @brief  Camera about task
+ * @note  Handle the camera control task
+ * @param {type} none
+ * @retval none
+ */
 void tskCamera(void *argument)
 {
   uint32_t keyEventBit;
-  //DCMI_Start();
+  DCMI_Start();  //Open camera defautly 
   for(;;)
   {
-    
     keyEventBit = osEventFlagsWait(keyEvent,KEY_ALL_EVENT_BIT,osFlagsWaitAny,portMAX_DELAY);
+    //start Camera
     if(keyEventBit&KEY_LEFT_EVENT_BIT)
     {
-      OV_PWDN(0);
-      osDelay(100);
+      if(!ovPowerStatus)     //if camera haven't opened, init it
+      {
+        osKernelLock();  //warning :Will case influence to realtime task
+        ov2640_Init();
+        osKernelUnlock();
+      }
+      osDelay(200);
+      CameraMode = JPEG_STREAM;
+      ovOutSizeSet(OV_JPEG_STREAM_WIDTH,OV_JPEG_STREAM_HEIGH);
       if(DCMI_Start()!=HAL_OK)
         OV_PWDN(1);
     }
-     if(keyEventBit&KEY_UP_EVENT_BIT)
+    //Close camera
+    if(keyEventBit&KEY_UP_EVENT_BIT)//stop Camera
     {
       DCMI_Stop();
-      OV_PWDN(0);
+      ov2640_DeInit();
+    }
+    //Take photo
+    if(keyEventBit&KEY_PRESS_EVENT_BIT)
+    {
+      if(ovPowerStatus)         //if camera not open, can't take photo
+      {
+        DCMI_Stop();
+        ovOutSizeSet(OV_JPEG_PHOTO_WIDTH,OV_JPEG_PHOTO_HEIGH);
+        CameraMode = JPEG_PHOTO;
+        DCMI_Start();
+        osDelay(100);
+      }
     }
     
   }
 }
+

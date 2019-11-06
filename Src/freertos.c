@@ -48,7 +48,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-
+osEventFlagsId_t  keyEvent;
+osEventFlagsId_t usbSendEvent;
 /* USER CODE END Variables */
 osThreadId_t StartTaskHandle;
 osThreadId_t taskMainHandle;
@@ -59,7 +60,7 @@ osThreadId_t CameraHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-osEventFlagsId_t  keyEvent;
+
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
@@ -90,6 +91,7 @@ osKernelInitialize();
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   keyEvent = osEventFlagsNew(NULL);
+  usbSendEvent = osEventFlagsNew(NULL);
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
