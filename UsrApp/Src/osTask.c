@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2019-11-01 21:16:41
- * @LastEditTime 2019-11-06 22:20:53
+ * @LastEditTime 2019-11-09 01:58:30
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath \Project\UsrApp\Src\osTask.c
@@ -16,11 +16,13 @@
 #include "usbd_cdc_if.h"
 #include "UsrHal.h"
 #include "dcmi.h"
+#include "sdmmc.h"
 /* Extern variable ------------------------------------------------------*/
 extern const uint8_t* pImageStmMem[3];
 extern uint8_t imageStmMemStatus[3];
 extern ovOutMode_t CameraMode;
 
+extern SD_HandleTypeDef hsd2;
 /* Event handler extern ------------------------------------------------------*/
 extern osEventFlagsId_t keyEvent;
 extern osEventFlagsId_t usbSendEvent;
@@ -38,7 +40,7 @@ void tskMain(void *argument)
 {
   for(;;)
   {
-    
+    CDC_Transmit_FS((uint8_t*)&(hsd2.SdCard),36);
     HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
     osDelay(500);
   }
@@ -159,7 +161,7 @@ void tskLcd(void *argument)
 void tskCamera(void *argument)
 {
   uint32_t keyEventBit;
-  DCMI_Start();  //Open camera defautly 
+ // DCMI_Start();  //Open camera defautly 
   for(;;)
   {
     keyEventBit = osEventFlagsWait(keyEvent,KEY_ALL_EVENT_BIT,osFlagsWaitAny,portMAX_DELAY);

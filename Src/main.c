@@ -23,8 +23,10 @@
 #include "cmsis_os.h"
 #include "dcmi.h"
 #include "dma.h"
+#include "fatfs.h"
 #include "i2c.h"
 #include "quadspi.h"
+#include "sdmmc.h"
 #include "spi.h"
 #include "usart.h"
 #include "usb_device.h"
@@ -113,6 +115,7 @@ int main(void)
   MX_SPI4_Init();
   MX_QUADSPI_Init();
   MX_DCMI_Init();
+  MX_SDMMC2_SD_Init();
   /* USER CODE BEGIN 2 */
 	psarmInit();
   /* USER CODE END 2 */
@@ -154,6 +157,9 @@ void SystemClock_Config(void)
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
 
   while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
+  /** Macro to configure the PLL clock source 
+  */
+  __HAL_RCC_PLL_PLLSOURCE_CONFIG(RCC_PLLSOURCE_HSE);
   /** Initializes the CPU, AHB and APB busses clocks 
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48|RCC_OSCILLATORTYPE_HSE;
@@ -164,7 +170,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLM = 5;
   RCC_OscInitStruct.PLL.PLLN = 192;
   RCC_OscInitStruct.PLL.PLLP = 2;
-  RCC_OscInitStruct.PLL.PLLQ = 2;
+  RCC_OscInitStruct.PLL.PLLQ = 4;
   RCC_OscInitStruct.PLL.PLLR = 2;
   RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_2;
   RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;
@@ -191,9 +197,18 @@ void SystemClock_Config(void)
     Error_Handler();
   }
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_UART5|RCC_PERIPHCLK_SPI4
-                              |RCC_PERIPHCLK_I2C4|RCC_PERIPHCLK_USB
-                              |RCC_PERIPHCLK_QSPI;
+                              |RCC_PERIPHCLK_SDMMC|RCC_PERIPHCLK_I2C4
+                              |RCC_PERIPHCLK_USB|RCC_PERIPHCLK_QSPI;
+  PeriphClkInitStruct.PLL2.PLL2M = 10;
+  PeriphClkInitStruct.PLL2.PLL2N = 160;
+  PeriphClkInitStruct.PLL2.PLL2P = 2;
+  PeriphClkInitStruct.PLL2.PLL2Q = 2;
+  PeriphClkInitStruct.PLL2.PLL2R = 2;
+  PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_1;
+  PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOWIDE;
+  PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
   PeriphClkInitStruct.QspiClockSelection = RCC_QSPICLKSOURCE_D1HCLK;
+  PeriphClkInitStruct.SdmmcClockSelection = RCC_SDMMCCLKSOURCE_PLL2;
   PeriphClkInitStruct.Spi45ClockSelection = RCC_SPI45CLKSOURCE_D2PCLK1;
   PeriphClkInitStruct.Usart234578ClockSelection = RCC_USART234578CLKSOURCE_D2PCLK1;
   PeriphClkInitStruct.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;

@@ -8,7 +8,11 @@
       "usbd_cdc_if.h": "c",
       "ov_2640.h": "c",
       "dcmi.h": "c",
-      "main.h": "c"
+      "main.h": "c",
+      "ff.h": "c",
+      "integer.h": "c",
+      "ffconf.h": "c",
+      "cmsis_os.h": "c"
     }
     
 }

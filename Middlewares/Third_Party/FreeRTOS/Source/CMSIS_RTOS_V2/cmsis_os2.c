@@ -1,11 +1,3 @@
-/*
- * @Author Shi Zhangkun
- * @Date 2019-10-22 01:41:07
- * @LastEditTime 2019-11-03 02:11:33
- * @LastEditors Shi Zhangkun
- * @Description none
- * @FilePath \Project\Middlewares\Third_Party\FreeRTOS\Source\CMSIS_RTOS_V2\cmsis_os2.c
- */
 /* --------------------------------------------------------------------------
  * Portions Copyright © 2017 STMicroelectronics International N.V. All rights reserved.
  * Portions Copyright (c) 2013-2017 ARM Limited. All rights reserved.

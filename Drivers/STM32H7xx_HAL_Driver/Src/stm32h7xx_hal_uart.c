@@ -1023,8 +1023,8 @@ HAL_StatusTypeDef HAL_UART_UnRegisterCallback(UART_HandleTypeDef *huart, HAL_UAR
   *       when TXFNF flag is set. From hardware perspective, TXFNF flag and
   *       TXE are mapped on the same bit-field.
   * @param huart   UART handle.
-  * @param pData   Pointer to data buffer (uint8_t or u16 data elements).
-  * @param Size    Amount of data elements (uint8_t or u16) to be sent.
+  * @param pData   Pointer to data buffer (u8 or u16 data elements).
+  * @param Size    Amount of data elements (u8 or u16) to be sent.
   * @param Timeout Timeout duration.
   * @retval HAL status
   */
@@ -1112,8 +1112,8 @@ HAL_StatusTypeDef HAL_UART_Transmit(UART_HandleTypeDef *huart, uint8_t *pData, u
   *       RXFNE flag is set. From hardware perspective, RXFNE flag and
   *       RXNE are mapped on the same bit-field.
   * @param huart   UART handle.
-  * @param pData   Pointer to data buffer (uint8_t or u16 data elements).
-  * @param Size    Amount of data elements (uint8_t or u16) to be received.
+  * @param pData   Pointer to data buffer (u8 or u16 data elements).
+  * @param Size    Amount of data elements (u8 or u16) to be received.
   * @param Timeout Timeout duration.
   * @retval HAL status
   */
@@ -1198,8 +1198,8 @@ HAL_StatusTypeDef HAL_UART_Receive(UART_HandleTypeDef *huart, uint8_t *pData, ui
   *         the sent data is handled as a set of u16. In this case, Size must indicate the number
   *         of u16 provided through pData.
   * @param huart UART handle.
-  * @param pData Pointer to data buffer (uint8_t or u16 data elements).
-  * @param Size  Amount of data elements (uint8_t or u16) to be sent.
+  * @param pData Pointer to data buffer (u8 or u16 data elements).
+  * @param Size  Amount of data elements (u8 or u16) to be sent.
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_UART_Transmit_IT(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size)
@@ -1272,8 +1272,8 @@ HAL_StatusTypeDef HAL_UART_Transmit_IT(UART_HandleTypeDef *huart, uint8_t *pData
   *         the received data is handled as a set of u16. In this case, Size must indicate the number
   *         of u16 available through pData.
   * @param huart UART handle.
-  * @param pData Pointer to data buffer (uint8_t or u16 data elements).
-  * @param Size  Amount of data elements (uint8_t or u16) to be received.
+  * @param pData Pointer to data buffer (u8 or u16 data elements).
+  * @param Size  Amount of data elements (u8 or u16) to be received.
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_UART_Receive_IT(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size)
@@ -1353,8 +1353,8 @@ HAL_StatusTypeDef HAL_UART_Receive_IT(UART_HandleTypeDef *huart, uint8_t *pData,
   *         the sent data is handled as a set of u16. In this case, Size must indicate the number
   *         of u16 provided through pData.
   * @param huart UART handle.
-  * @param pData Pointer to data buffer (uint8_t or u16 data elements).
-  * @param Size  Amount of data elements (uint8_t or u16) to be sent.
+  * @param pData Pointer to data buffer (u8 or u16 data elements).
+  * @param Size  Amount of data elements (u8 or u16) to be sent.
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_UART_Transmit_DMA(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size)
@@ -1429,8 +1429,8 @@ HAL_StatusTypeDef HAL_UART_Transmit_DMA(UART_HandleTypeDef *huart, uint8_t *pDat
   *         the received data is handled as a set of u16. In this case, Size must indicate the number
   *         of u16 available through pData.
   * @param huart UART handle.
-  * @param pData Pointer to data buffer (uint8_t or u16 data elements).
-  * @param Size  Amount of data elements (uint8_t or u16) to be received.
+  * @param pData Pointer to data buffer (u8 or u16 data elements).
+  * @param Size  Amount of data elements (u8 or u16) to be received.
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_UART_Receive_DMA(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size)

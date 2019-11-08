@@ -43,7 +43,6 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -106,7 +105,7 @@ osKernelInitialize();
   /* definition and creation of StartTask */
   const osThreadAttr_t StartTask_attributes = {
     .name = "StartTask",
-    .priority = (osPriority_t) osPriorityRealtime7,
+    .priority = (osPriority_t) osPriorityRealtime,
     .stack_size = 256
   };
   StartTaskHandle = osThreadNew(StartDefaultTask, NULL, &StartTask_attributes);
@@ -114,7 +113,7 @@ osKernelInitialize();
   /* definition and creation of taskMain */
   const osThreadAttr_t taskMain_attributes = {
     .name = "taskMain",
-    .priority = (osPriority_t) osPriorityNormal1,
+    .priority = (osPriority_t) osPriorityNormal,
     .stack_size = 128
   };
   taskMainHandle = osThreadNew(tskMain, NULL, &taskMain_attributes);
@@ -122,7 +121,7 @@ osKernelInitialize();
   /* definition and creation of UsbSendData */
   const osThreadAttr_t UsbSendData_attributes = {
     .name = "UsbSendData",
-    .priority = (osPriority_t) osPriorityNormal5,
+    .priority = (osPriority_t) osPriorityNormal,
     .stack_size = 512
   };
   UsbSendDataHandle = osThreadNew(tskUsbSendData, NULL, &UsbSendData_attributes);
@@ -130,7 +129,7 @@ osKernelInitialize();
   /* definition and creation of KeyOpreation */
   const osThreadAttr_t KeyOpreation_attributes = {
     .name = "KeyOpreation",
-    .priority = (osPriority_t) osPriorityAboveNormal5,
+    .priority = (osPriority_t) osPriorityAboveNormal,
     .stack_size = 128
   };
   KeyOpreationHandle = osThreadNew(tskKeyOpreation, NULL, &KeyOpreation_attributes);
@@ -138,7 +137,7 @@ osKernelInitialize();
   /* definition and creation of Lcd */
   const osThreadAttr_t Lcd_attributes = {
     .name = "Lcd",
-    .priority = (osPriority_t) osPriorityNormal3,
+    .priority = (osPriority_t) osPriorityNormal,
     .stack_size = 512
   };
   LcdHandle = osThreadNew(tskLcd, NULL, &Lcd_attributes);
@@ -146,7 +145,7 @@ osKernelInitialize();
   /* definition and creation of Camera */
   const osThreadAttr_t Camera_attributes = {
     .name = "Camera",
-    .priority = (osPriority_t) osPriorityLow7,
+    .priority = (osPriority_t) osPriorityLow,
     .stack_size = 128
   };
   CameraHandle = osThreadNew(tskCamera, NULL, &Camera_attributes);
