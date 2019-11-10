@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2019-11-01 21:16:41
- * @LastEditTime 2019-11-09 01:58:30
+ * @LastEditTime 2019-11-10 23:27:27
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath \Project\UsrApp\Src\osTask.c
@@ -10,6 +10,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "cmsis_os.h"
+#include "ff.h"
 #include "osTask.h"
 #include "main.h"
 
@@ -23,9 +24,11 @@ extern uint8_t imageStmMemStatus[3];
 extern ovOutMode_t CameraMode;
 
 extern SD_HandleTypeDef hsd2;
-/* Event handler extern ------------------------------------------------------*/
+/* Handler extern ------------------------------------------------------*/
+extern osMessageQueueId_t photoSaveQueueHandle;
 extern osEventFlagsId_t keyEvent;
 extern osEventFlagsId_t usbSendEvent;
+FATFS tfCardFS;
 /* Task Handler ---------------------------------------------------------*/
 
 /* Function declaration -------------------------------------------------*/
@@ -38,9 +41,10 @@ extern osEventFlagsId_t usbSendEvent;
  */
 void tskMain(void *argument)
 {
+
   for(;;)
   {
-    CDC_Transmit_FS((uint8_t*)&(hsd2.SdCard),36);
+    
     HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
     osDelay(500);
   }
@@ -57,8 +61,7 @@ void tskUsbSendData(void *argument)
   uint32_t usbSendEventBit;
 	uint8_t enter[2] = "\n\n";
   uint8_t imageReadMemIndex = 0;
-  uint32_t jpegHeadIndex = 0;
-  uint32_t jpegSize = 0;
+  uint32_t jpegMessage[2] = {0,0};
   uint8_t jpegHeadOk = 0;
   for(;;)
   {
@@ -70,32 +73,36 @@ void tskUsbSendData(void *argument)
         if(imageStmMemStatus[imageReadMemIndex])
         {
           jpegHeadOk = 0;
-          jpegHeadIndex = 0;
-          for(jpegSize = 0; jpegSize<(imageReadMemIndex<2?IMAGE_STREAM_MEM_SIZE:IMAGE_PHOTO_MEM_SIZE);jpegSize++)
+          jpegMessage[jpegHeadNum] = 0;
+          for(jpegMessage[jpegSize] = 0; jpegMessage[jpegSize]<(imageReadMemIndex<2?IMAGE_STREAM_MEM_SIZE:IMAGE_PHOTO_MEM_SIZE);jpegMessage[jpegSize]++)
           {
             
-            if(pImageStmMem[imageReadMemIndex][jpegSize] == 0xFF&&pImageStmMem[imageReadMemIndex][jpegSize + 1] == 0xD8&&jpegHeadOk == 0)
+            if(pImageStmMem[imageReadMemIndex][jpegMessage[jpegSize]] == 0xFF&&pImageStmMem[imageReadMemIndex][jpegMessage[jpegSize] + 1] == 0xD8&&jpegHeadOk == 0)
             {
-              jpegHeadIndex = jpegSize;
+              jpegMessage[jpegHeadNum] = jpegMessage[jpegSize];
               jpegHeadOk = 1;
             }
-            else if(pImageStmMem[imageReadMemIndex][jpegSize] == 0xFF&&pImageStmMem[imageReadMemIndex][jpegSize + 1] == 0xD9&&jpegHeadOk == 1)
+            else if(pImageStmMem[imageReadMemIndex][jpegMessage[jpegSize]] == 0xFF&&pImageStmMem[imageReadMemIndex][jpegMessage[jpegSize] + 1] == 0xD9&&jpegHeadOk == 1)
             {
-              jpegSize = jpegSize - jpegHeadIndex + 2;
+              jpegMessage[jpegSize] = jpegMessage[jpegSize] - jpegMessage[jpegHeadNum] + 2;
               jpegHeadOk = 2;
               break;
             }
           
           }
-          if(jpegHeadOk == 2&&jpegSize < 65535)
+          if(jpegHeadOk == 2&&jpegMessage[jpegSize] < 65535)
           {
-              CDC_Transmit_FS((uint8_t*)(&pImageStmMem[imageReadMemIndex][jpegHeadIndex]),jpegSize);
+            CDC_Transmit_FS((uint8_t*)(&pImageStmMem[imageReadMemIndex][jpegMessage[jpegHeadNum]]),jpegMessage[jpegSize]);
           }
           if(CDC_Transmit_FS((uint8_t*)enter,2)!=USBD_OK)
           {
             osDelay(5);
           }
           imageStmMemStatus[imageReadMemIndex] = 0;  
+          if(imageReadMemIndex == 2&&jpegHeadOk == 2)
+          {
+            osMessageQueuePut(photoSaveQueueHandle,jpegMessage,0,0);
+          }
         }
       }
     }
@@ -143,12 +150,33 @@ void tskKeyOpreation(void *argument)
  * @param {type} none
  * @retval none
  */
-void tskLcd(void *argument)
+void tskTFCard(void *argument)
 {
+  FIL file;
+  FRESULT res[3];
+  //const char testChar[] = "test Dma R/W\r\n";
+  UINT len;
+  uint32_t photoMessage[2];
+
+  res[0] = f_mount(&tfCardFS,"0:",1);
+  
   for(;;)
   {
-    
-    osDelay(1000);
+    osMessageQueueGet(photoSaveQueueHandle,photoMessage,NULL,portMAX_DELAY);
+    if(res[0]==FR_OK)
+    {
+      res[2] = 0xFF;
+      res[1] = f_open(&file,"test2.jpg",FA_WRITE);
+      if(res[1] == FR_OK)
+      {
+        res[2] = f_write(&file,&pImageStmMem[2][photoMessage[jpegHeadNum]],photoMessage[jpegSize],&len);
+        
+      }
+      CDC_Transmit_FS((uint8_t*)res,3);
+      osDelay(10);
+      CDC_Transmit_FS((uint8_t*)photoMessage,8);
+      f_close(&file);
+    }
   }
 }
 
@@ -196,6 +224,7 @@ void tskCamera(void *argument)
         CameraMode = JPEG_PHOTO;
         DCMI_Start();
         osDelay(100);
+        
       }
     }
     

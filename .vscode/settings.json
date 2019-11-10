@@ -12,7 +12,12 @@
       "ff.h": "c",
       "integer.h": "c",
       "ffconf.h": "c",
-      "cmsis_os.h": "c"
+      "cmsis_os.h": "c",
+      "sdmmc.h": "c",
+      "xutility": "c",
+      "fatfs.h": "c",
+      "ff_gen_drv.h": "c",
+      "ostask.h": "c"
     }
     
 }

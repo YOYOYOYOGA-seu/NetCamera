@@ -26,6 +26,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */     
+#include "fatfs.h"    
 #include "usbd_cdc_if.h"
 #include "UsrHal.h"
 #include "dcmi.h"
@@ -54,8 +55,9 @@ osThreadId_t StartTaskHandle;
 osThreadId_t taskMainHandle;
 osThreadId_t UsbSendDataHandle;
 osThreadId_t KeyOpreationHandle;
-osThreadId_t LcdHandle;
+osThreadId_t TFCardHandle;
 osThreadId_t CameraHandle;
+osMessageQueueId_t photoSaveQueueHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -66,7 +68,7 @@ void StartDefaultTask(void *argument);
 extern void tskMain(void *argument);
 extern void tskUsbSendData(void *argument);
 extern void tskKeyOpreation(void *argument);
-extern void tskLcd(void *argument);
+extern void tskTFCard(void *argument);
 extern void tskCamera(void *argument);
 
 extern void MX_USB_DEVICE_Init(void);
@@ -97,6 +99,13 @@ osKernelInitialize();
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
+  /* Create the queue(s) */
+  /* definition and creation of photoSaveQueue */
+  const osMessageQueueAttr_t photoSaveQueue_attributes = {
+    .name = "photoSaveQueue"
+  };
+  photoSaveQueueHandle = osMessageQueueNew (6, sizeof(long long), &photoSaveQueue_attributes);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
@@ -105,7 +114,7 @@ osKernelInitialize();
   /* definition and creation of StartTask */
   const osThreadAttr_t StartTask_attributes = {
     .name = "StartTask",
-    .priority = (osPriority_t) osPriorityRealtime,
+    .priority = (osPriority_t) osPriorityRealtime7,
     .stack_size = 256
   };
   StartTaskHandle = osThreadNew(StartDefaultTask, NULL, &StartTask_attributes);
@@ -113,7 +122,7 @@ osKernelInitialize();
   /* definition and creation of taskMain */
   const osThreadAttr_t taskMain_attributes = {
     .name = "taskMain",
-    .priority = (osPriority_t) osPriorityNormal,
+    .priority = (osPriority_t) osPriorityNormal1,
     .stack_size = 128
   };
   taskMainHandle = osThreadNew(tskMain, NULL, &taskMain_attributes);
@@ -121,7 +130,7 @@ osKernelInitialize();
   /* definition and creation of UsbSendData */
   const osThreadAttr_t UsbSendData_attributes = {
     .name = "UsbSendData",
-    .priority = (osPriority_t) osPriorityNormal,
+    .priority = (osPriority_t) osPriorityNormal2,
     .stack_size = 512
   };
   UsbSendDataHandle = osThreadNew(tskUsbSendData, NULL, &UsbSendData_attributes);
@@ -129,23 +138,23 @@ osKernelInitialize();
   /* definition and creation of KeyOpreation */
   const osThreadAttr_t KeyOpreation_attributes = {
     .name = "KeyOpreation",
-    .priority = (osPriority_t) osPriorityAboveNormal,
+    .priority = (osPriority_t) osPriorityRealtime,
     .stack_size = 128
   };
   KeyOpreationHandle = osThreadNew(tskKeyOpreation, NULL, &KeyOpreation_attributes);
 
-  /* definition and creation of Lcd */
-  const osThreadAttr_t Lcd_attributes = {
-    .name = "Lcd",
-    .priority = (osPriority_t) osPriorityNormal,
-    .stack_size = 512
+  /* definition and creation of TFCard */
+  const osThreadAttr_t TFCard_attributes = {
+    .name = "TFCard",
+    .priority = (osPriority_t) osPriorityHigh,
+    .stack_size = 1024
   };
-  LcdHandle = osThreadNew(tskLcd, NULL, &Lcd_attributes);
+  TFCardHandle = osThreadNew(tskTFCard, NULL, &TFCard_attributes);
 
   /* definition and creation of Camera */
   const osThreadAttr_t Camera_attributes = {
     .name = "Camera",
-    .priority = (osPriority_t) osPriorityLow,
+    .priority = (osPriority_t) osPriorityNormal4,
     .stack_size = 128
   };
   CameraHandle = osThreadNew(tskCamera, NULL, &Camera_attributes);
@@ -171,6 +180,7 @@ void StartDefaultTask(void *argument)
   MX_USB_DEVICE_Init();
 
   /* USER CODE BEGIN StartDefaultTask */
+  MX_FATFS_Init();
   ov2640_Init();
   
   //osThreadTerminate(StartTaskHandle);

@@ -23,7 +23,6 @@
 #include "cmsis_os.h"
 #include "dcmi.h"
 #include "dma.h"
-#include "fatfs.h"
 #include "i2c.h"
 #include "quadspi.h"
 #include "sdmmc.h"

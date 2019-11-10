@@ -14,6 +14,12 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+
+/* Type define --------------------------------------------------------------*/
+typedef enum{
+  jpegHeadNum = 0,
+  jpegSize
+}jpegMessageIndex_t;
 /* Defines ------------------------------------------------------------------*/
 #define KEY_ALL_EVENT_BIT         0x001F
 #define KEY_LEFT_EVENT_BIT        0x0001
