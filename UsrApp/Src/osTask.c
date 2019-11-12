@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2019-11-01 21:16:41
- * @LastEditTime 2019-11-10 23:27:27
+ * @LastEditTime 2019-11-12 16:23:18
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath \Project\UsrApp\Src\osTask.c
@@ -29,8 +29,8 @@ extern osMessageQueueId_t photoSaveQueueHandle;
 extern osEventFlagsId_t keyEvent;
 extern osEventFlagsId_t usbSendEvent;
 FATFS tfCardFS;
-/* Task Handler ---------------------------------------------------------*/
-
+/* Flag variable ---------------------------------------------------------*/
+uint8_t dataTransPath = 0;   //0:Usb     1:wifi
 /* Function declaration -------------------------------------------------*/
 
 /**
@@ -145,36 +145,48 @@ void tskKeyOpreation(void *argument)
 }
 
 /**
- * @brief  
- * @note  
+ * @brief  TFCard operate task
+ * @note  task: Save photo to SD card
  * @param {type} none
  * @retval none
  */
 void tskTFCard(void *argument)
 {
+  uint8_t pohotoFileID = 0;
+  char photoFileName[] = "PHOTO/CAM000.jpg";
   FIL file;
-  FRESULT res[3];
+  FRESULT resPhotoFolder;   //Signed if photo save folder prepared
   //const char testChar[] = "test Dma R/W\r\n";
   UINT len;
   uint32_t photoMessage[2];
 
-  res[0] = f_mount(&tfCardFS,"0:",1);
-  
+  resPhotoFolder = f_mount(&tfCardFS,"0:",1);
+  //determine if photo folder exist
+  if(resPhotoFolder==FR_OK&&f_stat("PHOTO",NULL)==FR_NO_FILE)
+  {
+    //if SD card mount successful and photo folder not exist, create it
+    resPhotoFolder = f_mkdir("PHOTO");
+  }
   for(;;)
   {
     osMessageQueueGet(photoSaveQueueHandle,photoMessage,NULL,portMAX_DELAY);
-    if(res[0]==FR_OK)
+    if(resPhotoFolder==FR_OK) //if file system is OK
     {
-      res[2] = 0xFF;
-      res[1] = f_open(&file,"test2.jpg",FA_WRITE);
-      if(res[1] == FR_OK)
+      //scan exist photo file for naming current photo
+      for(;pohotoFileID < 255;pohotoFileID++)
       {
-        res[2] = f_write(&file,&pImageStmMem[2][photoMessage[jpegHeadNum]],photoMessage[jpegSize],&len);
-        
+        sprintf(photoFileName,"PHOTO/CAM%03d.jpg",pohotoFileID);
+        //If this photoID haven't been used
+        if(f_stat(photoFileName,NULL)==FR_NO_FILE)
+        {
+          if(f_open(&file,photoFileName,FA_CREATE_NEW|FA_WRITE)==FR_OK)
+          {
+            f_write(&file,&pImageStmMem[2][photoMessage[jpegHeadNum]],photoMessage[jpegSize],&len);
+          }
+          break;
+        }
       }
-      CDC_Transmit_FS((uint8_t*)res,3);
-      osDelay(10);
-      CDC_Transmit_FS((uint8_t*)photoMessage,8);
+      osDelay(30);
       f_close(&file);
     }
   }

@@ -70,7 +70,6 @@ extern void tskUsbSendData(void *argument);
 extern void tskKeyOpreation(void *argument);
 extern void tskTFCard(void *argument);
 extern void tskCamera(void *argument);
-
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -83,7 +82,7 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
        
   /* USER CODE END Init */
-osKernelInitialize();
+  osKernelInitialize();
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */

@@ -23,6 +23,7 @@
 /* USER CODE BEGIN 0 */
 /* Extern variable  -----------------------------------------------------------------*/
 extern osEventFlagsId_t usbSendEvent;
+extern uint8_t dataTransPath;
 /* variable  -----------------------------------------------------------------*/
 ovOutMode_t CameraMode = JPEG_STREAM;   //default jpeg Stream 
 #if USE_PSARM_AS_PHOTO_MEM == 1
@@ -309,7 +310,10 @@ void HAL_DCMI_FrameEventCallback(DCMI_HandleTypeDef *hdcmi)
     imageStmMemStatus[2] = 1;  
   }
  // 
-	osEventFlagsSet(usbSendEvent,USB_SEND_IMAGE_EVENT_BIT);
+  if(dataTransPath);
+
+  else
+	  osEventFlagsSet(usbSendEvent,USB_SEND_IMAGE_EVENT_BIT);
 }
 
 /**
