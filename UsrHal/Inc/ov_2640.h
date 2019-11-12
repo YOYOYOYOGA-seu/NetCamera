@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2019-10-31 12:00:29
- * @LastEditTime 2019-11-06 22:06:32
+ * @LastEditTime 2019-11-13 01:09:30
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath \Project\UsrHal\Inc\ov_2640.h
@@ -34,8 +34,8 @@ typedef enum
 #define OV_RGB_IMGAE_WIDTH          480  
 #define OV_RGB_IMGAE_HEIGH          360
 
-#define OV_JPEG_STREAM_WIDTH        240      
-#define OV_JPEG_STREAM_HEIGH        180  
+#define OV_JPEG_STREAM_WIDTH        400      
+#define OV_JPEG_STREAM_HEIGH        300  
 
 #define OV_JPEG_PHOTO_WIDTH         800     
 #define OV_JPEG_PHOTO_HEIGH         600 

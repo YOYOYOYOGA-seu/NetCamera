@@ -64,14 +64,6 @@ void Error_Handler(void);
 #define LED1_GPIO_Port GPIOE
 #define LED2_Pin GPIO_PIN_3
 #define LED2_GPIO_Port GPIOE
-#define TFT_LED_Pin GPIO_PIN_11
-#define TFT_LED_GPIO_Port GPIOE
-#define TFT_A0_Pin GPIO_PIN_13
-#define TFT_A0_GPIO_Port GPIOE
-#define TFT_RESET_Pin GPIO_PIN_15
-#define TFT_RESET_GPIO_Port GPIOE
-#define TFT_CS_Pin GPIO_PIN_11
-#define TFT_CS_GPIO_Port GPIOB
 #define WF_RESET_Pin GPIO_PIN_8
 #define WF_RESET_GPIO_Port GPIOD
 #define KEY0_Pin GPIO_PIN_9

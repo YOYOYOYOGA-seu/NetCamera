@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2019-11-01 21:16:41
- * @LastEditTime 2019-11-12 16:23:18
+ * @LastEditTime 2019-11-13 00:49:17
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath \Project\UsrApp\Src\osTask.c
@@ -25,6 +25,7 @@ extern ovOutMode_t CameraMode;
 
 extern SD_HandleTypeDef hsd2;
 /* Handler extern ------------------------------------------------------*/
+
 extern osMessageQueueId_t photoSaveQueueHandle;
 extern osEventFlagsId_t keyEvent;
 extern osEventFlagsId_t usbSendEvent;

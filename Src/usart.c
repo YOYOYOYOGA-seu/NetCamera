@@ -21,10 +21,14 @@
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
-
+/* variable  -----------------------------------------------------------------*/
+//uint8_t UART5_TX_Buff[512];
+//uint8_t UART5_TX_Buff[512];
+void UART5_DMA_CompleteCallback(DMA_HandleTypeDef* hdma);
 /* USER CODE END 0 */
 
 UART_HandleTypeDef huart5;
+DMA_HandleTypeDef hdma_uart5_tx;
 
 /* UART5 init function */
 void MX_UART5_Init(void)
@@ -80,12 +84,40 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
     GPIO_InitStruct.Alternate = GPIO_AF14_UART5;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /* USER CODE BEGIN UART5_MspInit 1 */
+    /* UART5 DMA Init */
+    /* UART5_TX Init */
+    hdma_uart5_tx.Instance = DMA1_Stream0;
+    hdma_uart5_tx.Init.Request = DMA_REQUEST_UART5_TX;
+    hdma_uart5_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    hdma_uart5_tx.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_uart5_tx.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_uart5_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    hdma_uart5_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    hdma_uart5_tx.Init.Mode = DMA_NORMAL;
+    hdma_uart5_tx.Init.Priority = DMA_PRIORITY_MEDIUM;
+    hdma_uart5_tx.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
+    hdma_uart5_tx.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
+    hdma_uart5_tx.Init.MemBurst = DMA_MBURST_SINGLE;
+    hdma_uart5_tx.Init.PeriphBurst = DMA_PBURST_SINGLE;
+    if (HAL_DMA_Init(&hdma_uart5_tx) != HAL_OK)
+    {
+      Error_Handler();
+    }
 
+    __HAL_LINKDMA(uartHandle,hdmatx,hdma_uart5_tx);
+
+    /* UART5 interrupt Init */
+    HAL_NVIC_SetPriority(UART5_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(UART5_IRQn);
+  /* USER CODE BEGIN UART5_MspInit 1 */
+  __HAL_UNLOCK(&hdma_uart5_tx);
+  __HAL_DMA_ENABLE_IT(&hdma_uart5_tx,DMA_IT_TC);
+  HAL_DMA_RegisterCallback(&hdma_uart5_tx,HAL_DMA_XFER_CPLT_CB_ID,UART5_DMA_CompleteCallback);
+  __HAL_DMA_DISABLE(&hdma_uart5_tx);//close DMA after init
   /* USER CODE END UART5_MspInit 1 */
   }
 }
@@ -107,6 +139,11 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
     */
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_12|GPIO_PIN_13);
 
+    /* UART5 DMA DeInit */
+    HAL_DMA_DeInit(uartHandle->hdmatx);
+
+    /* UART5 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(UART5_IRQn);
   /* USER CODE BEGIN UART5_MspDeInit 1 */
 
   /* USER CODE END UART5_MspDeInit 1 */
@@ -115,6 +152,16 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 
 /* USER CODE BEGIN 1 */
 
+/**
+ * @brief  UART5_DMA Transfer Complate IT Callback function
+ * @note  
+ * @param {type} none
+ * @retval none
+ */
+void UART5_DMA_CompleteCallback(DMA_HandleTypeDef* hdma)
+{
+  
+}
 /* USER CODE END 1 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

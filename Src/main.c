@@ -109,8 +109,6 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_I2C4_Init();
-  MX_UART5_Init();
   MX_SPI4_Init();
   MX_QUADSPI_Init();
   MX_DCMI_Init();
