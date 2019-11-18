@@ -64,8 +64,10 @@ void Error_Handler(void);
 #define LED1_GPIO_Port GPIOE
 #define LED2_Pin GPIO_PIN_3
 #define LED2_GPIO_Port GPIOE
-#define WF_RESET_Pin GPIO_PIN_8
-#define WF_RESET_GPIO_Port GPIOD
+#define SPI4_CS_Pin GPIO_PIN_11
+#define SPI4_CS_GPIO_Port GPIOE
+#define WIFI_RESET_Pin GPIO_PIN_15
+#define WIFI_RESET_GPIO_Port GPIOE
 #define KEY0_Pin GPIO_PIN_9
 #define KEY0_GPIO_Port GPIOD
 #define KEY1_Pin GPIO_PIN_10

@@ -337,7 +337,7 @@
               <MiscControls/>
               <Define>USE_HAL_DRIVER,STM32H750xx</Define>
               <Undefine/>
-              <IncludePath>../Inc;           ../Drivers/STM32H7xx_HAL_Driver/Inc;           ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;           ../Middlewares/Third_Party/FreeRTOS/Source/include;           ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;           ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;           ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;           ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;           ../Drivers/CMSIS/Device/ST/STM32H7xx/Include;           ..\UsrHal\Inc;           ..\UsrApp\inc;           ../Drivers/CMSIS/Include;           ../Middlewares/Third_Party/FatFs/src;           ../Middlewares/Third_Party/FatFs/src/option;           ../Middlewares/Third_Party/FatFs/usr</IncludePath>
+              <IncludePath>../Inc;       ../Drivers/STM32H7xx_HAL_Driver/Inc;       ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;       ../Middlewares/Third_Party/FreeRTOS/Source/include;       ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;       ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;       ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;       ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;       ../Drivers/CMSIS/Device/ST/STM32H7xx/Include;       ..\UsrHal\Inc;       ..\UsrApp\inc;       ../Drivers/CMSIS/Include;       ../Middlewares/Third_Party/FatFs/src;       ../Middlewares/Third_Party/FatFs/src/option;       ../Middlewares/Third_Party/FatFs/usr;       ..\Module\ALK8266</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -515,6 +515,11 @@
               <FileName>ov_2640.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\UsrHal\Src\ov_2640.c</FilePath>
+            </File>
+            <File>
+              <FileName>wifi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\UsrHal\Src\wifi.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -815,6 +820,21 @@
               <FileName>user_diskio.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Middlewares\Third_Party\FatFs\usr\user_diskio.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>ALK8266</GroupName>
+          <Files>
+            <File>
+              <FileName>M8266HostIf.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Module\ALK8266\M8266HostIf.c</FilePath>
+            </File>
+            <File>
+              <FileName>M8266WIFIDrv_STM32H7xx.a</FileName>
+              <FileType>4</FileType>
+              <FilePath>..\Module\ALK8266\M8266WIFIDrv_STM32H7xx.a</FilePath>
             </File>
           </Files>
         </Group>

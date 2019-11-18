@@ -55,7 +55,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-char errorInform[20] = "noInform\n\0"; //error information char,will be sent by Error_Handler()
+char errorInform[20] = "\nnoInform\0"; //error information char,will be sent by Error_Handler()
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -114,7 +114,7 @@ int main(void)
   MX_DCMI_Init();
   MX_SDMMC2_SD_Init();
   /* USER CODE BEGIN 2 */
-	psarmInit();
+	
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */
@@ -279,10 +279,10 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-  if(strcmp(errorInform,"noInform\n\0") )
+  if(strcmp(errorInform,"\nnoInform\0") )
   {
     CDC_Transmit_FS((uint8_t*)errorInform,20);
-    strcpy(errorInform,"noInform\n\0");
+    strcpy(errorInform,"\nnoInform\0");
   }
   /* USER CODE END Error_Handler_Debug */
 }

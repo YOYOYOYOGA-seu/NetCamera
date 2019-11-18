@@ -49,27 +49,31 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 osEventFlagsId_t  keyEvent;
-osEventFlagsId_t usbSendEvent;
+osEventFlagsId_t  camOpEvent;
+osEventFlagsId_t  imageSendEvent;
+osEventFlagsId_t  cmdTransmitEvent;
 /* USER CODE END Variables */
 osThreadId_t StartTaskHandle;
 osThreadId_t taskMainHandle;
-osThreadId_t UsbSendDataHandle;
+osThreadId_t imageSendDataHandle;
 osThreadId_t KeyOpreationHandle;
 osThreadId_t TFCardHandle;
 osThreadId_t CameraHandle;
+osThreadId_t cmdTransmitHandle;
 osMessageQueueId_t photoSaveQueueHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-
+void hellowSrting(void);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
 extern void tskMain(void *argument);
-extern void tskUsbSendData(void *argument);
+extern void tskImageSendData(void *argument);
 extern void tskKeyOpreation(void *argument);
 extern void tskTFCard(void *argument);
 extern void tskCamera(void *argument);
+extern void tskCmdTransmit(void *argument);
 
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -92,7 +96,9 @@ osKernelInitialize();
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   keyEvent = osEventFlagsNew(NULL);
-  usbSendEvent = osEventFlagsNew(NULL);
+  camOpEvent = osEventFlagsNew(NULL);
+  imageSendEvent = osEventFlagsNew(NULL);
+  cmdTransmitEvent = osEventFlagsNew(NULL);
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -115,7 +121,7 @@ osKernelInitialize();
   const osThreadAttr_t StartTask_attributes = {
     .name = "StartTask",
     .priority = (osPriority_t) osPriorityRealtime7,
-    .stack_size = 256
+    .stack_size = 512
   };
   StartTaskHandle = osThreadNew(StartDefaultTask, NULL, &StartTask_attributes);
 
@@ -123,17 +129,17 @@ osKernelInitialize();
   const osThreadAttr_t taskMain_attributes = {
     .name = "taskMain",
     .priority = (osPriority_t) osPriorityNormal1,
-    .stack_size = 128
+    .stack_size = 256
   };
   taskMainHandle = osThreadNew(tskMain, NULL, &taskMain_attributes);
 
-  /* definition and creation of UsbSendData */
-  const osThreadAttr_t UsbSendData_attributes = {
-    .name = "UsbSendData",
+  /* definition and creation of imageSendData */
+  const osThreadAttr_t imageSendData_attributes = {
+    .name = "imageSendData",
     .priority = (osPriority_t) osPriorityNormal2,
     .stack_size = 512
   };
-  UsbSendDataHandle = osThreadNew(tskUsbSendData, NULL, &UsbSendData_attributes);
+  imageSendDataHandle = osThreadNew(tskImageSendData, NULL, &imageSendData_attributes);
 
   /* definition and creation of KeyOpreation */
   const osThreadAttr_t KeyOpreation_attributes = {
@@ -159,6 +165,14 @@ osKernelInitialize();
   };
   CameraHandle = osThreadNew(tskCamera, NULL, &Camera_attributes);
 
+  /* definition and creation of cmdTransmit */
+  const osThreadAttr_t cmdTransmit_attributes = {
+    .name = "cmdTransmit",
+    .priority = (osPriority_t) osPriorityHigh1,
+    .stack_size = 512
+  };
+  cmdTransmitHandle = osThreadNew(tskCmdTransmit, NULL, &cmdTransmit_attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -180,9 +194,12 @@ void StartDefaultTask(void *argument)
   MX_USB_DEVICE_Init();
 
   /* USER CODE BEGIN StartDefaultTask */
+  delayMs(500);
+  hellowSrting();
+  psarmInit();
   MX_FATFS_Init();
   ov2640_Init();
-  
+  WIFI_init();
   //osThreadTerminate(StartTaskHandle);
   /* Infinite loop */
   for(;;)
@@ -195,7 +212,19 @@ void StartDefaultTask(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-     
+void hellowSrting(void)
+{
+  static char hellow[] = {
+  "\n------------------------------\n \n\
+          NetCamera        \n \n\
+------------------------------\n \
+Version:0.1\n \
+Designer: szk\n \n\0\
+  "
+  };
+  CDC_Transmit_FS((uint8_t*)&hellow,130);
+  delayMs(5);
+}
 /* USER CODE END Application */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

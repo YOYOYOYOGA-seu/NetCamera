@@ -88,7 +88,7 @@
         {
             "label": "open in keil",
             "type": "process",
-            "command": "${D:/Keil_v5/Core/UV4/UV4.exe}",
+            "command": "D:/Keil_v5/Core/UV4/UV4.exe",
             "args": [
                 "./MDK-ARM/NetCamera.uvprojx"
             ],

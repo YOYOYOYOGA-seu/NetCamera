@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2019-10-30 21:46:03
- * @LastEditTime 2019-10-30 23:49:29
+ * @LastEditTime 2019-11-17 14:41:05
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath \Project\UsrHal\Src\delay.c
@@ -43,4 +43,22 @@ void delay_us(uint32_t nus)
 		}  
 	};
 	xTaskResumeAll();					//Resume OS											    
+}
+
+/**
+ * @brief  if os is run use osDelay(),else use Hal_Delay()
+ * @note  
+ * @param {type} none
+ * @retval none
+ */
+void delay_msOS(uint32_t nms)
+{
+  if(osKernelGetState() == osKernelRunning)
+  {
+    osDelay(nms);
+  }
+  else
+  {
+    HAL_Delay(nms);
+  }
 }

@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2019-11-01 21:16:41
- * @LastEditTime 2019-11-13 00:49:17
+ * @LastEditTime 2019-11-19 00:25:43
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath \Project\UsrApp\Src\osTask.c
@@ -22,16 +22,21 @@
 extern const uint8_t* pImageStmMem[3];
 extern uint8_t imageStmMemStatus[3];
 extern ovOutMode_t CameraMode;
-
-extern SD_HandleTypeDef hsd2;
+extern WIFI_status_t wifiStatus;
 /* Handler extern ------------------------------------------------------*/
-
 extern osMessageQueueId_t photoSaveQueueHandle;
 extern osEventFlagsId_t keyEvent;
-extern osEventFlagsId_t usbSendEvent;
+extern osEventFlagsId_t camOpEvent;
+extern osEventFlagsId_t imageSendEvent;
+extern osEventFlagsId_t cmdTransmitEvent;
+
+extern SD_HandleTypeDef hsd2;
+
 FATFS tfCardFS;
 /* Flag variable ---------------------------------------------------------*/
-uint8_t dataTransPath = 0;   //0:Usb     1:wifi
+uint8_t dataTransPath = 1;   //0:Usb     1:wifi
+
+
 /* Function declaration -------------------------------------------------*/
 
 /**
@@ -42,10 +47,18 @@ uint8_t dataTransPath = 0;   //0:Usb     1:wifi
  */
 void tskMain(void *argument)
 {
-
+  
   for(;;)
   {
-    
+    WIFI_determineConnect();
+    if(wifiStatus == WIFI_SERVER_CONNECT)
+    {
+      DCMI_Start();
+    }
+    else
+    {
+      DCMI_Stop();
+    }
     HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
     osDelay(500);
   }
@@ -57,17 +70,18 @@ void tskMain(void *argument)
  * @param {type} none
  * @retval none
  */
-void tskUsbSendData(void *argument)
+void tskImageSendData(void *argument)
 {
-  uint32_t usbSendEventBit;
-	uint8_t enter[2] = "\n\n";
+  uint32_t imageSendEventBit;
+	uint8_t enterBreak[2] = "\n\n";
   uint8_t imageReadMemIndex = 0;
   uint32_t jpegMessage[2] = {0,0};
   uint8_t jpegHeadOk = 0;
+  
   for(;;)
   {
-    usbSendEventBit = osEventFlagsWait(usbSendEvent,USB_SEND_ALL_EVENT_BIT,osFlagsWaitAny,portMAX_DELAY);
-    if(usbSendEventBit&USB_SEND_IMAGE_EVENT_BIT)
+    imageSendEventBit = osEventFlagsWait(imageSendEvent,IMAGE_SEND_ALL_EVENT_BIT,osFlagsWaitAny,portMAX_DELAY);
+    if(imageSendEventBit&IMAGE_SEND_ONE_FRAME_EVENT_BIT)
     {
       for(imageReadMemIndex = 0;imageReadMemIndex<3;imageReadMemIndex++)
       {
@@ -93,11 +107,18 @@ void tskUsbSendData(void *argument)
           }
           if(jpegHeadOk == 2&&jpegMessage[jpegSize] < 65535)
           {
-            CDC_Transmit_FS((uint8_t*)(&pImageStmMem[imageReadMemIndex][jpegMessage[jpegHeadNum]]),jpegMessage[jpegSize]);
-          }
-          if(CDC_Transmit_FS((uint8_t*)enter,2)!=USBD_OK)
-          {
-            osDelay(5);
+            if(dataTransPath)
+            {
+              WIFI_sendPakageData((uint8_t*)(&pImageStmMem[imageReadMemIndex][jpegMessage[jpegHeadNum]]),jpegMessage[jpegSize]);
+            }
+            else
+            {
+              CDC_Transmit_FS((uint8_t*)(&pImageStmMem[imageReadMemIndex][jpegMessage[jpegHeadNum]]),jpegMessage[jpegSize]);
+              if(CDC_Transmit_FS((uint8_t*)enterBreak,2)!=USBD_OK)
+              {
+                osDelay(5);
+              }
+            }
           }
           imageStmMemStatus[imageReadMemIndex] = 0;  
           if(imageReadMemIndex == 2&&jpegHeadOk == 2)
@@ -110,6 +131,21 @@ void tskUsbSendData(void *argument)
     osDelay(10);
   }
   
+}
+
+/**
+ * @brief  
+ * @note  
+ * @param {type} none
+ * @retval none
+ */
+
+void tskCmdTransmit(void *argument)
+{
+  for(;;)
+  {
+    osDelay(500);
+  }
 }
 
 /**
@@ -201,13 +237,13 @@ void tskTFCard(void *argument)
  */
 void tskCamera(void *argument)
 {
-  uint32_t keyEventBit;
- // DCMI_Start();  //Open camera defautly 
+  uint32_t camOpEventBit;
+  DCMI_Start();  //Open camera defautly 
   for(;;)
   {
-    keyEventBit = osEventFlagsWait(keyEvent,KEY_ALL_EVENT_BIT,osFlagsWaitAny,portMAX_DELAY);
+    camOpEventBit = osEventFlagsWait(camOpEvent,CAMERA_ALL_EVENT_BIT,osFlagsWaitAny,portMAX_DELAY);
     //start Camera
-    if(keyEventBit&KEY_LEFT_EVENT_BIT)
+    if(camOpEventBit&CAMERA_START_EVENT_BIT)
     {
       if(!ovPowerStatus)     //if camera haven't opened, init it
       {
@@ -222,13 +258,13 @@ void tskCamera(void *argument)
         OV_PWDN(1);
     }
     //Close camera
-    if(keyEventBit&KEY_UP_EVENT_BIT)//stop Camera
+    if(camOpEventBit&CAMERA_STOP_EVENT_BIT)//stop Camera
     {
       DCMI_Stop();
       ov2640_DeInit();
     }
     //Take photo
-    if(keyEventBit&KEY_PRESS_EVENT_BIT)
+    if(camOpEventBit&CAMERA_PHOTO_EVENT_BIT)
     {
       if(ovPowerStatus)         //if camera not open, can't take photo
       {

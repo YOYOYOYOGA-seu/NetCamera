@@ -22,7 +22,8 @@
 
 /* USER CODE BEGIN 0 */
 /* Extern variable  -----------------------------------------------------------------*/
-extern osEventFlagsId_t usbSendEvent;
+extern osEventFlagsId_t imageSendEvent;
+extern osEventFlagsId_t cmdTransmitEvent;
 extern uint8_t dataTransPath;
 /* variable  -----------------------------------------------------------------*/
 ovOutMode_t CameraMode = JPEG_STREAM;   //default jpeg Stream 
@@ -264,7 +265,10 @@ uint8_t DCMI_Start(void)
  */
 void DCMI_Stop(void)
 { 
-  
+  if(!(DCMI->CR&0X01))  //if DCMI is running
+  {
+    return ;
+  }
   DCMI->CR&=~(DCMI_CR_CAPTURE);       //关闭捕获
   while(DCMI->CR&0X01);               //等待传输完成
   __HAL_DMA_DISABLE(&hdma_dcmi);//关闭DMA
@@ -310,10 +314,7 @@ void HAL_DCMI_FrameEventCallback(DCMI_HandleTypeDef *hdcmi)
     imageStmMemStatus[2] = 1;  
   }
  // 
-  if(dataTransPath);
-
-  else
-	  osEventFlagsSet(usbSendEvent,USB_SEND_IMAGE_EVENT_BIT);
+	osEventFlagsSet(imageSendEvent,IMAGE_SEND_ONE_FRAME_EVENT_BIT);
 }
 
 /**

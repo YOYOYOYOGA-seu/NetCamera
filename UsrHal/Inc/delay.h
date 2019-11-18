@@ -19,9 +19,10 @@
 /*Commend defines ------------------------------------------------------------*/
 #define delayMs(ms)     HAL_Delay(ms)
 #define delayUs(us)     delay_us(us)
-#define osDelayMs(ms)   osDelay(ms)
+#define osDelayMs(ms)   delay_msOS(ms)
 /* Function declaration ------------------------------------------------------*/
 void delay_us(uint32_t nus);
+void delay_msOS(uint32_t nms);
 #ifdef __cplusplus
 }
 #endif

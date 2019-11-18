@@ -57,6 +57,8 @@ HAL_StatusTypeDef ov2640_Init(void)
 	ovJPEG_Mode();
   ovOutSizeSet(OV_JPEG_STREAM_WIDTH,OV_JPEG_STREAM_HEIGH);
   ovPowerStatus = OV_PWOER_ON;
+  strcpy(errorInform, "\nokOV2640Init\0");
+  Error_Handler();
   return HAL_OK;
 }
 
