@@ -42,3 +42,10 @@
 2019/11/12       (branch develop_tf)
 添加TF卡中照片文件夹建立与命名问题
 待添加： wifi传输
+
+
+2019/11/19       (branch develop_wifi)
+wifi图传初步实现
+需要解决：wifi函数的精简，断线重连等
+          代码结构整理
+          wifi命令

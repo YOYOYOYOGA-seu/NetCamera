@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2019-11-01 21:16:41
- * @LastEditTime 2019-11-19 00:25:43
+ * @LastEditTime 2019-11-20 13:38:12
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath \Project\UsrApp\Src\osTask.c
@@ -12,6 +12,7 @@
 #include "cmsis_os.h"
 #include "ff.h"
 #include "osTask.h"
+#include "cmdSys.h"
 #include "main.h"
 
 #include "usbd_cdc_if.h"
@@ -64,6 +65,20 @@ void tskMain(void *argument)
   }
 }
 
+/**
+ * @brief  Motion control task
+ * @note  
+ * @param {type} none
+ * @retval none
+ */
+void tskMotionControl(void *argument)
+{
+  for(;;)
+  {
+    //delayMs(2);
+    osDelay(10);
+  }
+}
 /**
  * @brief  Usb CDC sent data task
  * @note  
@@ -142,9 +157,32 @@ void tskImageSendData(void *argument)
 
 void tskCmdTransmit(void *argument)
 {
+  uint8_t cmdRecv[] = CMD_IDLE;
+  uint8_t cmdIndex;
   for(;;)
   {
-    osDelay(500);
+    if(WIFI_reciveCmd(cmdRecv,WIFI_CMD_LENGTH)==HAL_OK)
+    {
+      cmdIndex = CMD_Analysis(cmdRecv);
+      switch (cmdIndex)
+      {
+      case CMD_START_STREAM_INDEX:
+        CDC_Transmit_FS(cmdRecv,9);
+        osEventFlagsSet(camOpEvent,CAMERA_START_EVENT_BIT);
+        break;
+      case CMD_STOP_STREAM_INDEX:
+        CDC_Transmit_FS(cmdRecv,9);
+        osEventFlagsSet(camOpEvent,CAMERA_STOP_EVENT_BIT);
+        break;
+      default:
+        CDC_Transmit_FS((uint8_t*)CMD_DEFINE[CMD_IDLE_INDEX],9);
+        break;
+      }
+      
+     
+    }
+    cmdIndex = CMD_IDLE_INDEX;
+    osDelay(50);
   }
 }
 

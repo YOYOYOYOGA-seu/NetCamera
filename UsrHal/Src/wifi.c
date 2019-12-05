@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2019-11-17 14:22:33
- * @LastEditTime 2019-11-19 00:23:27
+ * @LastEditTime 2019-11-20 13:08:41
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath \Project\UsrHal\Src\wifi.c
@@ -12,6 +12,7 @@
 #include "wifi.h"
 #include "delay.h"
 #include "main.h"
+#include <stdlib.h>
 /* Extern varaible -----------------------------------------------------------*/
 extern SPI_HandleTypeDef hspi4;
 
@@ -37,7 +38,7 @@ void WIFI_hardwareReset(void)
 
 /**
  * @brief  init ALK8266 module and set to STA mode
- * @note  
+ * @note  API will wait 10s for wifi and TCP/UDP connect
  * @param {type} none
  * @retval none
  */
@@ -46,10 +47,6 @@ WIFI_status_t WIFI_init(void)
   u32  	spiCLK = 15000000;
   u8    testByte;
 	u8   	sta_ap_mode = 0;
-	//u8   	connection_status = 0xFF;
-	//char 	sta_ip[15+1]={0};
-	//char 	ssid[32];
-	//s8   	rssi;
 	u16  	status = 0;
   
   WIFI_hardwareReset();
@@ -148,7 +145,7 @@ void WIFI_sendPakageData(uint8_t* addr,uint32_t size)
   uint16_t status;
   uint8_t* currentAddr = addr;
   uint32_t remainingSize = size;
-  if(wifiStatus == WIFI_SERVER_CONNECT)
+  if(wifiStatus == WIFI_SERVER_CONNECT)  //return when haven't set connection with TCP server
   {
     while(remainingSize>0)// TCP/UDP package Max size = 1000
     {
@@ -165,6 +162,32 @@ void WIFI_sendPakageData(uint8_t* addr,uint32_t size)
     }
   }
 }
+HAL_StatusTypeDef WIFI_reciveCmd(uint8_t* addr,uint8_t cmdLength)
+{
+  uint8_t i;
+  uint8_t cmdRecvBuff[100];
+  uint16_t status = 0xFF;
+  uint16_t cmdRecvLen;
+  uint8_t linkNo;
+  if(M8266WIFI_SPI_Has_DataReceived())
+  {
+    cmdRecvLen = M8266WIFI_SPI_RecvData(cmdRecvBuff,100,1,&linkNo,&status);
+    if(status == 0x00&&cmdRecvLen>=cmdLength)     //don't care TCP pakage is lager than cmdbuffSize
+    {
+      for(i=0;i<cmdRecvLen-(cmdLength-1);i++)
+      {
+        if(cmdRecvBuff[i]=='C'&&cmdRecvBuff[i+1]=='T')
+        {
+          
+          memcpy(addr,&cmdRecvBuff[i],cmdLength);
+          return HAL_OK;
+        }
+      }
+    }
+  }
+  
+  return HAL_ERROR;
+}
 /**
  * @brief  Determine if wifi and TCPserver connected,if not, connect it
  * @note  
@@ -176,7 +199,7 @@ void WIFI_determineConnect(void)
   uint8_t tcpConStatus;
   uint8_t wifiConStatus;
   uint16_t status;
-  if(M8266WIFI_SPI_Get_STA_Connection_Status(&wifiConStatus,&status))
+  if(M8266WIFI_SPI_Get_STA_Connection_Status(&wifiConStatus,&status))//if successfully get M8266 wifi status
   {
     switch (wifiConStatus)
     {
@@ -185,24 +208,24 @@ void WIFI_determineConnect(void)
       {
         if(tcpConStatus==ANYLINKIN_WIFI_LINK_CONNECTION_STATE_CONNECT||\
         tcpConStatus==ANYLINKIN_WIFI_LINK_CONNECTION_STATE_WRITE||\
-        tcpConStatus==ANYLINKIN_WIFI_LINK_CONNECTION_STATE_READ)
+        tcpConStatus==ANYLINKIN_WIFI_LINK_CONNECTION_STATE_READ)    //TCP server connect
         {
           
           if(wifiStatus!=WIFI_SERVER_CONNECT)
           {
             strcpy(errorInform, "\nokM8266ServConect\0");
             Error_Handler();
-            wifiStatus=WIFI_SERVER_CONNECT; //TCP server connect
+            wifiStatus=WIFI_SERVER_CONNECT; 
           }
         }
-        else
+        else //TCP server disconnect
         {
-          if(wifiStatus==WIFI_SERVER_CONNECT)  //TCP server closed
+          if(wifiStatus==WIFI_SERVER_CONNECT) //if last status TCP connect, show "TCP"
           {
-            strcpy(errorInform, "\nerrM8266ServCoErr\0");
+            strcpy(errorInform, "\nerrM8266ServBreak\0");
             Error_Handler();
           }
-          else if(wifiStatus!=WIFI_CONNECT)  //connect to wifi
+          else if(wifiStatus!=WIFI_CONNECT)  //if last status wifi disconnect connect
           {
             strcpy(errorInform, "\nokM8266APConnect\0");
             Error_Handler();
@@ -215,6 +238,7 @@ void WIFI_determineConnect(void)
       break;
     default://wifi haven't connect
       wifiStatus=WIFI_IDLE;   
+      /*Because M8266 will connect to wifi automatically, so don't need to send connection Cmd*/
       break;
     }
   }

@@ -60,6 +60,7 @@ osThreadId_t KeyOpreationHandle;
 osThreadId_t TFCardHandle;
 osThreadId_t CameraHandle;
 osThreadId_t cmdTransmitHandle;
+osThreadId_t motionControlHandle;
 osMessageQueueId_t photoSaveQueueHandle;
 
 /* Private function prototypes -----------------------------------------------*/
@@ -74,6 +75,7 @@ extern void tskKeyOpreation(void *argument);
 extern void tskTFCard(void *argument);
 extern void tskCamera(void *argument);
 extern void tskCmdTransmit(void *argument);
+extern void tskMotionControl(void *argument);
 
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -173,6 +175,14 @@ osKernelInitialize();
   };
   cmdTransmitHandle = osThreadNew(tskCmdTransmit, NULL, &cmdTransmit_attributes);
 
+  /* definition and creation of motionControl */
+  const osThreadAttr_t motionControl_attributes = {
+    .name = "motionControl",
+    .priority = (osPriority_t) osPriorityRealtime6,
+    .stack_size = 512
+  };
+  motionControlHandle = osThreadNew(tskMotionControl, NULL, &motionControl_attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -205,7 +215,7 @@ void StartDefaultTask(void *argument)
   for(;;)
   {
     //test ov5640 and psram
-		osDelay(1000);
+		osDelay(portMAX_DELAY);
   }
   /* USER CODE END StartDefaultTask */
 }
