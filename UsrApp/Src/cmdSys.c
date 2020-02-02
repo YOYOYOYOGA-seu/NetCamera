@@ -1,8 +1,8 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2019-11-20 10:24:24
- * @LastEditTime 2019-11-20 12:59:43
- * @LastEditors Shi Zhangkun
+ * @LastEditTime  2020-02-01 13:24:09
+ * @LastEditors   Shi Zhangkun
  * @Description none
  * @FilePath \Project\UsrApp\Src\cmdSys.c
  */
@@ -18,14 +18,14 @@
  * @param {type} none
  * @retval none
  */
-uint8_t CMD_Analysis(uint8_t* cmd)
+uint8_t CMD_Analysis(uint8_t *cmd)
 {
   uint8_t cmdIndex = 0;
   uint16_t status;
-  for(cmdIndex=1;cmdIndex <= CMD_NUM;cmdIndex++)
+  for (cmdIndex = 1; cmdIndex <= CMD_NUM; cmdIndex++)
   {
-    if(!strcmp((const char*)cmd,(const char*)CMD_DEFINE[cmdIndex]))
-    {                   
+    if (!strcmp((const char *)cmd, (const char *)CMD_DEFINE[cmdIndex]))
+    {
       return cmdIndex;
     }
   }
