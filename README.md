@@ -1,7 +1,4 @@
 # NetCamera
-# NetCamera
-# NetCamera
-# NetCamera
    
 2019/11/3
 稳定版15帧JPEG传输
